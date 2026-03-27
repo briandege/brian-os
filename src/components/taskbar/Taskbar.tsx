@@ -1,68 +1,81 @@
 "use client";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Wifi, Shield, Activity } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 
 export default function Taskbar() {
-  const { windows, focusedId, restore, focus } = useWindowStore();
-  const [time, setTime] = useState("");
-  const [date, setDate] = useState("");
+  const { windows, focusedId, restore, focus, minimize } = useWindowStore();
+  const [time, setTime] = useState({ h: "", m: "", s: "", date: "" });
+  const [networkStrength] = useState(4); // 1-4
 
   useEffect(() => {
     const tick = () => {
       const now = new Date();
-      setTime(now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }));
-      setDate(now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }));
+      setTime({
+        h: now.toLocaleTimeString("en-US", { hour: "2-digit", hour12: false }),
+        m: now.toLocaleTimeString("en-US", { minute: "2-digit" }),
+        s: now.getSeconds().toString().padStart(2, "0"),
+        date: now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" }),
+      });
     };
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, []);
 
-  const openWindows = windows.filter((w) => !w.isMinimized || w.isMinimized);
+  const openWindows = windows;
 
   return (
     <div
-      className="glass fixed bottom-0 left-0 right-0 h-12 flex items-center px-4 gap-2 z-40"
-      style={{ borderTop: "1px solid #2A2A2A" }}
+      className="glass fixed bottom-0 left-0 right-0 h-12 flex items-center px-4 z-40 select-none"
+      style={{ borderTop: "1px solid rgba(255,255,255,0.045)" }}
     >
-      {/* Brian OS logo */}
-      <div
-        className="text-xs font-bold font-mono mr-3 tracking-widest"
-        style={{ color: "#D4B896" }}
-      >
-        brian.os
+      {/* ── Left: Brand ─────────────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full" style={{ background: "#C8A97E" }} />
+          <span
+            className="text-[11px] font-bold font-mono tracking-[0.18em] uppercase"
+            style={{ color: "#C8A97E" }}
+          >
+            brian.os
+          </span>
+        </div>
+        <div className="w-px h-3.5" style={{ background: "#252528" }} />
       </div>
 
-      <div className="h-4 w-px" style={{ background: "#2A2A2A" }} />
-
-      {/* Open windows */}
-      <div className="flex-1 flex items-center gap-1 overflow-hidden">
-        <AnimatePresence>
+      {/* ── Center: Open windows ────────────────────────────────────────── */}
+      <div className="flex-1 flex items-center gap-1 overflow-hidden px-2 min-w-0">
+        <AnimatePresence initial={false}>
           {openWindows.map((win) => {
-            const isActive = focusedId === win.instanceId && !win.isMinimized;
+            const active = focusedId === win.instanceId && !win.isMinimized;
             return (
               <motion.button
                 key={win.instanceId}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                initial={{ opacity: 0, scale: 0.85, width: 0 }}
+                animate={{ opacity: 1, scale: 1, width: "auto" }}
+                exit={{ opacity: 0, scale: 0.85, width: 0 }}
+                transition={{ type: "spring" as const, stiffness: 420, damping: 32 }}
                 onClick={() => {
                   if (win.isMinimized) restore(win.instanceId);
+                  else if (active) minimize(win.instanceId);
                   else focus(win.instanceId);
                 }}
-                className="flex items-center gap-2 px-3 py-1 rounded-md text-xs transition-colors max-w-[160px]"
+                className="flex items-center gap-2 px-2.5 py-1 rounded-lg text-[11px] font-medium shrink-0 max-w-[140px] whitespace-nowrap overflow-hidden"
                 style={{
-                  background: isActive ? "rgba(212,184,150,0.12)" : "transparent",
-                  color: isActive ? "#D4B896" : "#6B6B6B",
-                  border: `1px solid ${isActive ? "rgba(212,184,150,0.2)" : "transparent"}`,
+                  background: active ? "rgba(200,169,126,0.1)" : "transparent",
+                  color: active ? "#C8A97E" : win.isMinimized ? "#2E2E33" : "#4A4A56",
+                  border: `1px solid ${active ? "rgba(200,169,126,0.16)" : "transparent"}`,
                 }}
               >
-                {/* Active indicator dot */}
-                <span
-                  className="w-1.5 h-1.5 rounded-full shrink-0"
-                  style={{ background: isActive ? "#D4B896" : win.isMinimized ? "#3A3A3A" : "#4A4A4A" }}
+                <div
+                  className="shrink-0 rounded-full"
+                  style={{
+                    width: 5,
+                    height: 5,
+                    background: active ? "#C8A97E" : win.isMinimized ? "#252528" : "#3A3A42",
+                  }}
                 />
                 <span className="truncate">{win.title}</span>
               </motion.button>
@@ -71,13 +84,50 @@ export default function Taskbar() {
         </AnimatePresence>
       </div>
 
-      {/* Clock */}
-      <div className="text-right shrink-0">
-        <div className="text-xs font-medium" style={{ color: "#F5F5F0" }}>
-          {time}
+      {/* ── Right: System tray ──────────────────────────────────────────── */}
+      <div className="flex items-center gap-3 shrink-0">
+        <div className="w-px h-3.5" style={{ background: "#252528" }} />
+
+        {/* System tray icons */}
+        <div className="flex items-center gap-2.5">
+          {/* Shield/security indicator */}
+          <Shield size={12} style={{ color: "#28C840" }} />
+
+          {/* Network */}
+          <div className="flex items-end gap-[2px] h-3">
+            {[1, 2, 3, 4].map((bar) => (
+              <div
+                key={bar}
+                className="w-[3px] rounded-sm"
+                style={{
+                  height: 3 + bar * 2,
+                  background: bar <= networkStrength ? "#4A4A56" : "#1E1E22",
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Activity indicator */}
+          <div className="flex items-center gap-1">
+            <div className="w-1 h-1 rounded-full animate-pulse" style={{ background: "#28C840" }} />
+          </div>
         </div>
-        <div className="text-[10px]" style={{ color: "#6B6B6B" }}>
-          {date}
+
+        <div className="w-px h-3.5" style={{ background: "#252528" }} />
+
+        {/* Clock */}
+        <div className="text-right">
+          <div className="flex items-baseline gap-[2px]">
+            <span className="text-[13px] font-semibold tabular-nums font-mono" style={{ color: "#F0EDE6" }}>
+              {time.h}:{time.m}
+            </span>
+            <span className="text-[10px] font-mono" style={{ color: "#3A3A42" }}>
+              :{time.s}
+            </span>
+          </div>
+          <div className="text-[9px] font-mono text-right" style={{ color: "#3A3A42" }}>
+            {time.date}
+          </div>
         </div>
       </div>
     </div>

@@ -1,95 +1,117 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const BOOT_LINES = [
-  { text: "BIOS v2.4.1  |  AXIRA_CORE  |  ARM64", delay: 0 },
-  { text: "[ OK ] Initializing memory subsystem .............. 64GB", delay: 180 },
-  { text: "[ OK ] Loading kernel modules", delay: 340 },
-  { text: "[ OK ] Mounting encrypted filesystem .............. /dev/sda1", delay: 500 },
-  { text: "[ OK ] Starting network interface ................. eth0", delay: 660 },
-  { text: "[ OK ] Establishing secure tunnel ................. Cloudflare Edge", delay: 820 },
-  { text: "[ OK ] Connecting to PostgreSQL ................... localhost:5432", delay: 980 },
-  { text: "[ OK ] Connecting to Redis ........................ localhost:6379", delay: 1120 },
-  { text: "[ OK ] Loading AI inference engine ................ AXIRA_CORE v1.0", delay: 1280 },
-  { text: "[ OK ] Starting AxiraNews ingestion daemon", delay: 1440 },
-  { text: "[ OK ] Compiling UI assets", delay: 1580 },
-  { text: "[ OK ] All services operational", delay: 1720 },
-  { text: "", delay: 1860 },
-  { text: "Welcome, Brian.", delay: 1960 },
-];
-
-interface Props {
-  onComplete: () => void;
+interface BootLine {
+  text: string;
+  delay: number;
+  type: "ok" | "info" | "warn" | "blank" | "header";
 }
 
+const LINES: BootLine[] = [
+  { type: "header", text: "AXIRA_BIOS v3.1.0  |  64-bit UEFI  |  ARM64  |  2026", delay: 0 },
+  { type: "blank",  text: "",                                                         delay: 80 },
+  { type: "info",   text: "CPU: Apple M-Series  —  12 cores / 32GB Neural Engine",   delay: 160 },
+  { type: "info",   text: "RAM: 64GB LPDDR5  —  bandwidth 800 GB/s",                 delay: 290 },
+  { type: "blank",  text: "",                                                         delay: 380 },
+  { type: "ok",     text: "[ OK ] Verifying cryptographic integrity",                 delay: 460 },
+  { type: "ok",     text: "[ OK ] Loading kernel image .............................. axira/6.1.0", delay: 580 },
+  { type: "ok",     text: "[ OK ] Mounting encrypted root filesystem ............... /dev/nvme0n1p2", delay: 720 },
+  { type: "ok",     text: "[ OK ] Starting systemd .................................... v252", delay: 860 },
+  { type: "ok",     text: "[ OK ] Brought up network interface ........................ eth0", delay: 980 },
+  { type: "ok",     text: "[ OK ] Connecting to Cloudflare tunnel ..................... edge-node-iad", delay: 1100 },
+  { type: "ok",     text: "[ OK ] Starting PostgreSQL 16 .............................. port 5432", delay: 1220 },
+  { type: "ok",     text: "[ OK ] Starting Redis 7.2 .................................. port 6379", delay: 1330 },
+  { type: "ok",     text: "[ OK ] Loading AI inference runtime ........................ AXIRA_CORE", delay: 1440 },
+  { type: "ok",     text: "[ OK ] Starting AxiraNews ingestion daemon ................. 6 sources", delay: 1550 },
+  { type: "ok",     text: "[ OK ] Spawning Node.js API workers ........................ 4 threads", delay: 1650 },
+  { type: "ok",     text: "[ OK ] Compiling UI assets ................................. done", delay: 1740 },
+  { type: "blank",  text: "",                                                         delay: 1840 },
+  { type: "ok",     text: "[ OK ] All systems operational",                           delay: 1900 },
+  { type: "blank",  text: "",                                                         delay: 1980 },
+  { type: "header", text: "Welcome back, Brian.",                                     delay: 2080 },
+];
+
+const DONE_DELAY = 2080 + 1600;
+const EXIT_DELAY = DONE_DELAY + 800;
+
+interface Props { onComplete: () => void }
+
 export default function BootSequence({ onComplete }: Props) {
-  const [visibleLines, setVisibleLines] = useState<number>(0);
-  const [done, setDone] = useState(false);
+  const [visible, setVisible]   = useState(0);
+  const [exiting, setExiting]   = useState(false);
+  const [showScan, setShowScan] = useState(true);
+  const called = useRef(false);
 
   useEffect(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
-
-    BOOT_LINES.forEach((line, i) => {
-      timers.push(
-        setTimeout(() => setVisibleLines(i + 1), line.delay + 300)
-      );
-    });
-
-    // Trigger exit after last line
-    const lastDelay = BOOT_LINES[BOOT_LINES.length - 1].delay + 1400;
-    timers.push(setTimeout(() => setDone(true), lastDelay));
-    timers.push(setTimeout(() => onComplete(), lastDelay + 900));
-
+    LINES.forEach((line, i) =>
+      timers.push(setTimeout(() => setVisible(i + 1), line.delay))
+    );
+    timers.push(setTimeout(() => setExiting(true), DONE_DELAY));
+    timers.push(setTimeout(() => {
+      if (!called.current) { called.current = true; onComplete(); }
+    }, EXIT_DELAY));
     return () => timers.forEach(clearTimeout);
   }, [onComplete]);
 
+  const lineColor = (type: BootLine["type"]) => {
+    switch (type) {
+      case "ok":     return "#C8A97E";
+      case "info":   return "#52524E";
+      case "warn":   return "#FEBC2E";
+      case "header": return "#F0EDE6";
+      default:       return "transparent";
+    }
+  };
+
   return (
     <AnimatePresence>
-      {!done ? (
+      {!exiting ? (
         <motion.div
           key="boot"
-          className="scanlines fixed inset-0 z-50 flex flex-col justify-end p-10 overflow-hidden"
-          style={{ background: "#050505" }}
-          exit={{ opacity: 0, filter: "blur(8px)" }}
-          transition={{ duration: 0.8, ease: "easeInOut" }}
+          className="scanlines vignette fixed inset-0 z-[100] flex flex-col justify-end overflow-hidden"
+          style={{ background: "#050506" }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.6, ease: "easeIn" }}
         >
-          {/* Dim amber phosphor effect */}
-          <div className="flex flex-col gap-[3px] font-mono text-sm leading-6 max-w-3xl">
-            {BOOT_LINES.slice(0, visibleLines).map((line, i) => (
+          {/* Phosphor glow at bottom */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none"
+            style={{
+              background: "linear-gradient(to top, rgba(200,169,126,0.03) 0%, transparent 100%)",
+            }}
+          />
+
+          <div className="relative z-10 p-8 pb-12 space-y-[2px] font-mono text-[13px] leading-[1.7]">
+            {LINES.slice(0, visible).map((line, i) => (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, x: -8 }}
+                initial={{ opacity: 0, x: -6 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.15 }}
+                transition={{ duration: 0.1 }}
                 style={{
-                  color: line.text.startsWith("[ OK ]")
-                    ? "#D4B896"
-                    : line.text === "Welcome, Brian."
-                    ? "#F5F5F0"
-                    : "#6B6050",
-                  fontWeight: line.text === "Welcome, Brian." ? 600 : 400,
-                  fontSize: line.text === "Welcome, Brian." ? "1.1rem" : undefined,
+                  color: lineColor(line.type),
+                  fontWeight: line.type === "header" ? 600 : 400,
+                  letterSpacing: line.type === "header" ? "0.02em" : undefined,
                 }}
               >
                 {line.text || "\u00A0"}
               </motion.div>
             ))}
 
-            {/* Blinking cursor */}
-            {visibleLines < BOOT_LINES.length && (
-              <span className="terminal-cursor" style={{ color: "#D4B896" }}>
-                █
-              </span>
+            {/* Blinking cursor only while still printing */}
+            {visible < LINES.length && (
+              <span className="terminal-cursor" style={{ color: "#C8A97E" }}>█</span>
             )}
           </div>
 
-          {/* Bottom brand */}
+          {/* Version watermark */}
           <div
-            className="absolute bottom-6 right-10 font-mono text-xs"
-            style={{ color: "#2A2A2A" }}
+            className="absolute bottom-4 right-6 font-mono text-[10px]"
+            style={{ color: "#1E1E22" }}
           >
-            brian.os / kernel 6.1.0-axira
+            brian.os / build {new Date().getFullYear()}
           </div>
         </motion.div>
       ) : null}
