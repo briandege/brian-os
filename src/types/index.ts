@@ -6,7 +6,8 @@ export type AppId =
   | "systemmonitor"
   | "contact"
   | "skills"
-  | "resume";
+  | "resume"
+  | "notebook";
 
 export interface AppDefinition {
   id: AppId;

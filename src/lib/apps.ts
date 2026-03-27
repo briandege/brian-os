@@ -57,6 +57,13 @@ export const APP_REGISTRY: AppDefinition[] = [
     defaultSize: { width: 660, height: 540 },
     minSize: { width: 420, height: 400 },
   },
+  {
+    id: "notebook",
+    label: "Notebook",
+    icon: "BookOpen",
+    defaultSize: { width: 1100, height: 680 },
+    minSize: { width: 640, height: 480 },
+  },
 ];
 
 export function getApp(id: string): AppDefinition | undefined {

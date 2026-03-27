@@ -28,8 +28,12 @@ export default function Taskbar() {
 
   return (
     <div
-      className="glass fixed bottom-0 left-0 right-0 h-12 flex items-center px-4 z-40 select-none"
-      style={{ borderTop: "1px solid rgba(255,255,255,0.045)" }}
+      className="glass fixed bottom-0 left-0 right-0 flex items-center px-4 z-40 select-none"
+      style={{
+        borderTop: "1px solid rgba(255,255,255,0.045)",
+        height: "calc(48px + env(safe-area-inset-bottom))",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
       {/* ── Left: Brand ─────────────────────────────────────────────────── */}
       <div className="flex items-center gap-3 shrink-0">

@@ -25,6 +25,8 @@
 
 html, body {
   width: 100%; height: 100%;
+  /* Cover the notch + home bar on iPhone */
+  min-height: 100dvh;
   overflow: hidden;
   background: #070708;
   color: #F0EDE6;
@@ -33,6 +35,10 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
   cursor: default;
   user-select: none;
+  /* Prevent iOS bounce scroll */
+  overscroll-behavior: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */

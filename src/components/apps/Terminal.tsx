@@ -26,6 +26,7 @@ Commands:
   pwd            Print working directory
   uname          System info
   clear          Clear terminal
+  notebook       Open JupyterLab window
   help           This menu
 `.trim();
 
@@ -112,6 +113,8 @@ export default function TerminalApp() {
       case "projects":  open("projects"); out("→ opening Projects"); break;
       case "axira":     open("axira"); out("→ launching AxiraNews"); break;
       case "contact":   open("contact"); out("→ opening Contact"); break;
+      case "notebook":  open("notebook"); out("→ launching JupyterLab"); break;
+      case "jupyter":   open("notebook"); out("→ launching JupyterLab"); break;
       case "ls":
         out("total 4");
         out("drwxr-xr-x  projects/");
