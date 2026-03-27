@@ -1,103 +1,116 @@
-import Image from "next/image";
+"use client";
+import { useState, useCallback, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import BootSequence from "@/components/boot/BootSequence";
+import Desktop from "@/components/desktop/Desktop";
+import { useWindowStore } from "@/lib/windowStore";
+
+function WelcomeOverlay({ onEnter }: { onEnter: () => void }) {
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "F5") onEnter();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onEnter]);
+
+  return (
+    <motion.div
+      className="fixed inset-0 z-40 flex flex-col items-center justify-center gap-8"
+      style={{ background: "#080808" }}
+      exit={{ opacity: 0, filter: "blur(12px)", scale: 1.04 }}
+      transition={{ duration: 0.7, ease: "easeInOut" }}
+    >
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, type: "spring", stiffness: 260, damping: 22 }}
+        className="text-center"
+      >
+        <div
+          className="text-5xl font-black tracking-[0.15em] font-mono"
+          style={{ color: "#D4B896" }}
+        >
+          brian.os
+        </div>
+        <div className="text-sm mt-2 font-mono" style={{ color: "#4A4A4A" }}>
+          kernel 6.1.0-axira · all systems ready
+        </div>
+      </motion.div>
+
+      <motion.div
+        initial={{ scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={{ delay: 0.3, duration: 0.6, ease: "easeOut" }}
+        className="w-24 h-px"
+        style={{ background: "#2A2A2A" }}
+      />
+
+      <motion.button
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, type: "spring", stiffness: 280, damping: 24 }}
+        onClick={onEnter}
+        whileHover={{ scale: 1.04 }}
+        whileTap={{ scale: 0.97 }}
+        className="px-10 py-3 rounded-xl text-sm font-semibold tracking-wider"
+        style={{
+          background: "rgba(212,184,150,0.08)",
+          border: "1px solid rgba(212,184,150,0.22)",
+          color: "#D4B896",
+        }}
+      >
+        ENTER DESKTOP
+      </motion.button>
+
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8 }}
+        className="text-xs font-mono"
+        style={{ color: "#2A2A2A" }}
+      >
+        press any key or click to continue
+      </motion.p>
+    </motion.div>
+  );
+}
+
+type Phase = "boot" | "welcome" | "desktop";
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [phase, setPhase] = useState<Phase>("boot");
+  const { open } = useWindowStore();
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+  const handleBootComplete = useCallback(() => setPhase("welcome"), []);
+
+  const handleEnterDesktop = useCallback(() => {
+    setPhase("desktop");
+    setTimeout(() => open("terminal"), 400);
+    setTimeout(() => open("axira"), 750);
+  }, [open]);
+
+  return (
+    <main className="fixed inset-0" style={{ background: "#080808" }}>
+      <AnimatePresence mode="wait">
+        {phase === "boot" && (
+          <BootSequence key="boot" onComplete={handleBootComplete} />
+        )}
+        {phase === "welcome" && (
+          <WelcomeOverlay key="welcome" onEnter={handleEnterDesktop} />
+        )}
+      </AnimatePresence>
+
+      {/* Desktop is mounted but invisible until phase=desktop */}
+      <motion.div
+        className="fixed inset-0"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: phase === "desktop" ? 1 : 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        style={{ pointerEvents: phase === "desktop" ? "auto" : "none" }}
+      >
+        <Desktop />
+      </motion.div>
+    </main>
   );
 }

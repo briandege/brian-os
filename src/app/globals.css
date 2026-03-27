@@ -1,26 +1,84 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ── Boss Palette ─────────────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-void:        #080808;
+  --color-graphite:    #1A1A1A;
+  --color-surface:     #141414;
+  --color-border:      #2A2A2A;
+  --color-tan:         #D4B896;
+  --color-tan-bright:  #E8CEAF;
+  --color-tan-muted:   #8C7A65;
+  --color-bone:        #F5F5F0;
+  --color-muted:       #6B6B6B;
+  --color-glass:       rgba(20, 20, 20, 0.72);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080808;
+  color: #F5F5F0;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  cursor: default;
+  user-select: none;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #2A2A2A; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #D4B896; }
+
+/* ── Glass utility ────────────────────────────────────────────────────────── */
+.glass {
+  background: rgba(20, 20, 20, 0.72);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
+
+/* ── Terminal cursor blink ────────────────────────────────────────────────── */
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.terminal-cursor { animation: blink 1s step-end infinite; }
+
+/* ── Scan-line overlay (subtle CRT effect on boot screen) ────────────────── */
+@keyframes scan {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 100px; }
+}
+.scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.08) 2px,
+    rgba(0,0,0,0.08) 4px
+  );
+  pointer-events: none;
+  animation: scan 8s linear infinite;
+}
+
+/* ── Window focus ring ────────────────────────────────────────────────────── */
+.window-focused { box-shadow: 0 0 0 1px #D4B896, 0 32px 80px rgba(0,0,0,0.8); }
+.window-blurred { box-shadow: 0 0 0 1px #2A2A2A, 0 16px 40px rgba(0,0,0,0.6); }
+
+/* ── No-select on window chrome ──────────────────────────────────────────── */
+.window-chrome { cursor: grab; }
+.window-chrome:active { cursor: grabbing; }
+
+/* ── Glow effects ─────────────────────────────────────────────────────────── */
+.tan-glow { text-shadow: 0 0 20px rgba(212, 184, 150, 0.4); }
+.tan-glow-box { box-shadow: 0 0 30px rgba(212, 184, 150, 0.15); }
