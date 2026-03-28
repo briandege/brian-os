@@ -1,5 +1,5 @@
 {
-  "name": "brian-os",
+  "name": "strontium-os",
   "version": "0.1.0",
   "private": true,
   "main": "electron/main.js",
@@ -13,8 +13,8 @@
     "electron:build": "next build --turbopack && next export && electron-builder"
   },
   "build": {
-    "appId": "com.briandege.brian-os",
-    "productName": "brian.os",
+    "appId": "com.briandege.strontium-os",
+    "productName": "strontium.os",
     "directories": { "output": "dist" },
     "files": ["electron/**/*", "out/**/*", "public/**/*"],
     "mac": {

@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useWindowStore } from "@/lib/windowStore";
 import type { AppId } from "@/types";
 
-const PROMPT = "brian@axira:~$ ";
+const PROMPT = "brian@strontium:~$ ";
 
 const BANNER = `
  █████╗ ██╗  ██╗██╗██████╗  █████╗
@@ -11,25 +11,48 @@ const BANNER = `
 ███████║ ╚███╔╝ ██║██████╔╝███████║
 ██╔══██║ ██╔██╗ ██║██╔══██╗██╔══██║
 ██║  ██║██╔╝ ██╗██║██║  ██║██║  ██║
-╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝
-`.trim();
+╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚═╝  ╚═╝╚═╝  ╚═╝`.trim();
 
 const HELP_TEXT = `
 Commands:
   whoami         About Brian Ndege
-  skills         Open Skills.db window
-  projects       Open Projects window
+  neofetch       System & profile snapshot
+  open <app>     Open an app (terminal, about, axira, projects,
+                   skills, contact, resume, notebook, simulation,
+                   systemmonitor)
+  skills         Open Skills.db
+  projects       Open Projects
   axira          Launch AxiraNews
   contact        Open Contact
+  resume         Open Resume
+  simulation     Launch Simulation engine
+  notebook       Open JupyterLab
   ls             List directory
-  cat <file>     Read a file (try: cat resume.md)
-  pwd            Print working directory
-  uname          System info
-  clear          Clear terminal
-  notebook       Open JupyterLab window
-  simulation     Launch simulation engine
+  cat <file>     Read a file  (resume.md, about.txt, contact.txt)
+  echo <text>    Print text
+  ps             Running processes
+  history        Command history
+  pwd            Working directory
+  date           Current date/time
+  uname          Kernel info
+  clear          Clear terminal  (also Ctrl+L)
   help           This menu
 `.trim();
+
+const NEOFETCH = `
+           ████████          brian@strontium
+          ██████████         ──────────────────────────
+         ████  ████          OS:     strontium.os  6.1.0-strontium
+        ██  ██  ████         Kernel: Next.js 15 · React 19
+       ████████████          Shell:  zsh 5.9
+      ██████████████         Resolution: adaptive × adaptive
+     ████  ████  ████        WM:     Framer Motion
+    ██  ██  ██  ██  ██       Theme:  Void Dark [Axira]
+   ████████████████████      Icons:  Lucide React
+  ██████████████████████     Memory: 64 GB LPDDR5
+                             CPU:    Apple M-Series · 12 cores
+  ████  ████  ████  ████     GPU:    Apple Neural Engine
+  ████  ████  ████  ████     Stack:  TypeScript · Python · Swift`.trim();
 
 const FS: Record<string, string> = {
   "resume.md": `# Brian Ndege
@@ -46,12 +69,12 @@ Software Engineer · AI Engineer · Cybersecurity
 
 ## Projects
   AxiraNews       AI-powered news intelligence platform
-  brian.os        This portfolio OS
+  strontium.os        This portfolio OS
   Axira AV        Custom antivirus engine
   OSINT Suite     IP/domain/CVE intelligence
 
 ## Contact
-  Email:    brian@axiranews.com
+  Email:    brian@strontiumnews.com
   GitHub:   github.com/briandege`,
 
   "about.txt": `Full-stack developer and AI systems builder.
@@ -59,19 +82,24 @@ I build intelligence tools from the data layer up.
 Currently working on AxiraNews — a real-time
 AI-powered global news platform.`,
 
-  "contact.txt": `Email:    brian@axiranews.com
+  "contact.txt": `Email:    brian@strontiumnews.com
 GitHub:   github.com/briandege
 LinkedIn: linkedin.com/in/briandege
 Web:      axiranews.com`,
 };
 
-type LineType = "banner" | "input" | "output" | "error" | "blank" | "dim";
+const APP_IDS: AppId[] = [
+  "terminal","about","axira","projects","skills",
+  "contact","resume","notebook","simulation","systemmonitor",
+];
+
+type LineType = "banner" | "input" | "output" | "error" | "blank" | "dim" | "success";
 interface Line { type: LineType; text: string }
 
 const INITIAL: Line[] = [
-  { type: "banner", text: BANNER },
-  { type: "dim",    text: "brian.os terminal v1.0  —  type 'help' for commands" },
-  { type: "blank",  text: "" },
+  { type: "banner",  text: BANNER },
+  { type: "dim",     text: "strontium.os terminal v2.0  —  type 'help' for commands" },
+  { type: "blank",   text: "" },
 ];
 
 export default function TerminalApp() {
@@ -83,40 +111,68 @@ export default function TerminalApp() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lines]);
-
+  useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines]);
   useEffect(() => { inputRef.current?.focus(); }, []);
 
-  const push  = (line: Line) => setLines((l) => [...l, line]);
-  const out   = (text: string) => text.split("\n").forEach((t) => push({ type: "output", text: t }));
-  const err   = (text: string) => push({ type: "error", text });
-  const blank = () => push({ type: "blank", text: "" });
+  const push    = (line: Line) => setLines((l) => [...l, line]);
+  const out     = (text: string) => text.split("\n").forEach((t) => push({ type: "output", text: t }));
+  const err     = (text: string) => push({ type: "error",   text });
+  const success = (text: string) => push({ type: "success", text });
+  const blank   = () => push({ type: "blank", text: "" });
 
   function run(raw: string) {
-    const cmd = raw.trim().toLowerCase();
+    const trimmed = raw.trim();
     push({ type: "input", text: PROMPT + raw });
 
-    if (!cmd) { blank(); return; }
+    if (!trimmed) { blank(); return; }
     setHistory((h) => [raw, ...h.slice(0, 49)]);
     setHistIdx(-1);
 
-    const first = cmd.split(" ")[0];
-    switch (first) {
-      case "help":    out(HELP_TEXT); break;
+    const parts = trimmed.split(/\s+/);
+    const cmd = parts[0].toLowerCase();
+    const args = parts.slice(1);
+
+    switch (cmd) {
+      case "help":
+        out(HELP_TEXT);
+        break;
+
       case "whoami":
         out("Brian Ndege");
         out("Full-stack engineer · AI systems builder · Cybersecurity specialist");
         out("Building intelligence infrastructure from scratch.");
         break;
-      case "skills":    open("skills"); out("→ opening Skills.db"); break;
-      case "projects":  open("projects"); out("→ opening Projects"); break;
-      case "axira":     open("axira"); out("→ launching AxiraNews"); break;
-      case "contact":   open("contact"); out("→ opening Contact"); break;
-      case "notebook":    open("notebook");    out("→ launching JupyterLab"); break;
-      case "jupyter":     open("notebook");    out("→ launching JupyterLab"); break;
-      case "simulation":  open("simulation");  out("→ launching simulation engine"); break;
+
+      case "neofetch":
+        push({ type: "banner", text: NEOFETCH });
+        break;
+
+      case "open": {
+        const target = args[0]?.toLowerCase() as AppId;
+        if (!target) { err("usage: open <app>"); break; }
+        if (APP_IDS.includes(target)) {
+          open(target);
+          success(`→ opened ${target}`);
+        } else {
+          err(`open: unknown app '${target}'\nAvailable: ${APP_IDS.join(", ")}`);
+        }
+        break;
+      }
+
+      case "echo":
+        out(args.join(" ") || "");
+        break;
+
+      case "skills":       open("skills");       success("→ opening Skills.db");        break;
+      case "projects":     open("projects");     success("→ opening Projects");          break;
+      case "axira":        open("axira");        success("→ launching AxiraNews");       break;
+      case "contact":      open("contact");      success("→ opening Contact");           break;
+      case "resume":       open("resume");       success("→ opening Resume");            break;
+      case "notebook":
+      case "jupyter":      open("notebook");     success("→ launching JupyterLab");      break;
+      case "simulation":   open("simulation");   success("→ launching simulation engine"); break;
+      case "about":        open("about");        success("→ opening about.brian");       break;
+
       case "ls":
         out("total 4");
         out("drwxr-xr-x  projects/");
@@ -124,24 +180,49 @@ export default function TerminalApp() {
         out("-rw-r--r--  about.txt");
         out("-rw-r--r--  contact.txt");
         break;
+
       case "cat": {
-        const file = raw.trim().slice(4).trim();
+        const file = args.join(" ");
         if (!file) { err("usage: cat <filename>"); break; }
         const content = FS[file];
         if (content) out(content);
         else err(`cat: ${file}: No such file or directory`);
         break;
       }
+
+      case "ps":
+        out("  PID TTY          TIME CMD");
+        out("    1 ?        00:00:01 systemd");
+        out("  420 ?        00:00:04 node (AxiraNews API)");
+        out("  421 ?        00:00:02 postgres");
+        out("  422 ?        00:00:01 redis-server");
+        out("  888 pts/0    00:00:00 zsh");
+        out(" 1337 pts/0    00:00:00 strontium.os");
+        break;
+
+      case "history":
+        if (history.length === 0) { out("(no history)"); break; }
+        history.slice().reverse().forEach((h, i) => out(`  ${i + 1}  ${h}`));
+        break;
+
       case "clear":
-        setLines([{ type: "dim", text: "brian.os terminal v1.0" }, { type: "blank", text: "" }]);
+      case "cls":
+        setLines([{ type: "dim", text: "strontium.os terminal v2.0" }, { type: "blank", text: "" }]);
         return;
-      case "pwd":     out("/home/brian"); break;
-      case "date":    out(new Date().toString()); break;
-      case "uname":   out("Linux axira-os 6.1.0-axira #1 SMP ARM64 GNU/Linux"); break;
-      case "exit":    out("Use the ✕ button to close the window."); break;
-      case "sudo":    err("Nice try."); break;
-      case "rm":      err("Permission denied. (nice try)"); break;
-      default:        err(`command not found: ${cmd.split(" ")[0]}  —  try 'help'`);
+
+      case "pwd":   out("/home/brian"); break;
+      case "date":  out(new Date().toString()); break;
+      case "uname": out("Linux strontium-os 6.1.0-strontium #1 SMP ARM64 GNU/Linux"); break;
+      case "exit":  out("Use the ✕ button to close the window."); break;
+      case "sudo":  err("Nice try."); break;
+      case "rm":    err("Permission denied. (nice try)"); break;
+      case "vim":
+      case "nano":  err("nano/vim not available — use the GUI apps instead."); break;
+      case "curl":  err("curl: network access disabled in sandbox."); break;
+      case "ping":  out(`PING ${args[0] ?? "axira.internal"}: 64 bytes, ttl=64, time=1.2ms`); break;
+
+      default:
+        err(`command not found: ${cmd}  —  try 'help'`);
     }
     blank();
   }
@@ -159,6 +240,11 @@ export default function TerminalApp() {
     } else if (e.key === "l" && e.ctrlKey) {
       e.preventDefault();
       setLines([{ type: "blank", text: "" }]);
+    } else if (e.key === "c" && e.ctrlKey) {
+      e.preventDefault();
+      push({ type: "input", text: PROMPT + input + "^C" });
+      setInput("");
+      blank();
     }
   }
 
@@ -168,6 +254,7 @@ export default function TerminalApp() {
       case "input":   return { color: "#DFC49A" };
       case "output":  return { color: "#8A8A7A" };
       case "error":   return { color: "#FF5F57" };
+      case "success": return { color: "#28C840" };
       case "dim":     return { color: "#3A3A42" };
       default:        return { color: "transparent" };
     }
@@ -182,10 +269,7 @@ export default function TerminalApp() {
       {/* Output */}
       <div className="flex-1 overflow-y-auto p-4 pb-2">
         {lines.map((line, i) => (
-          <div
-            key={i}
-            style={{ ...lineStyle(line.type), whiteSpace: "pre", overflowX: "auto" }}
-          >
+          <div key={i} style={{ ...lineStyle(line.type), whiteSpace: "pre", overflowX: "auto" }}>
             {line.text || "\u00A0"}
           </div>
         ))}
@@ -198,8 +282,9 @@ export default function TerminalApp() {
         style={{ borderTop: "1px solid #111115" }}
       >
         <span style={{ color: "#7A6348" }}>brian</span>
-        <span style={{ color: "#3A3A42" }}>@axira</span>
-        <span style={{ color: "#3A3A42" }}>:~$ </span>
+        <span style={{ color: "#3A3A42" }}>@strontium</span>
+        <span style={{ color: "#52524E" }}>:~</span>
+        <span style={{ color: "#C8A97E" }}>$ </span>
         <input
           ref={inputRef}
           value={input}

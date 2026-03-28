@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { motion, useDragControls, useMotionValue } from "framer-motion";
 import { X, Minus, Square } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
@@ -8,6 +8,93 @@ import type { WindowState } from "@/types";
 interface Props {
   win: WindowState;
   children: React.ReactNode;
+}
+
+type ResizeDir = "e" | "s" | "se" | "w" | "n" | "ne" | "sw" | "nw";
+
+const CURSOR_MAP: Record<ResizeDir, string> = {
+  n: "n-resize", s: "s-resize",
+  e: "e-resize", w: "w-resize",
+  ne: "ne-resize", nw: "nw-resize",
+  se: "se-resize", sw: "sw-resize",
+};
+
+function ResizeHandle({ dir, win }: { dir: ResizeDir; win: WindowState }) {
+  const { resize, move } = useWindowStore();
+  const isResizing = useRef(false);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      isResizing.current = true;
+
+      const startX = e.clientX;
+      const startY = e.clientY;
+      const startW = win.size.width;
+      const startH = win.size.height;
+      const startPX = win.position.x;
+      const startPY = win.position.y;
+
+      const MIN_W = 320;
+      const MIN_H = 200;
+
+      const onMove = (ev: PointerEvent) => {
+        const dx = ev.clientX - startX;
+        const dy = ev.clientY - startY;
+        let newW = startW, newH = startH, newPX = startPX, newPY = startPY;
+
+        if (dir.includes("e")) newW = Math.max(MIN_W, startW + dx);
+        if (dir.includes("s")) newH = Math.max(MIN_H, startH + dy);
+        if (dir.includes("w")) {
+          newW = Math.max(MIN_W, startW - dx);
+          newPX = startPX + (startW - newW);
+        }
+        if (dir.includes("n")) {
+          newH = Math.max(MIN_H, startH - dy);
+          newPY = startPY + (startH - newH);
+        }
+
+        resize(win.instanceId, { width: newW, height: newH });
+        if (dir.includes("w") || dir.includes("n")) {
+          move(win.instanceId, { x: newPX, y: newPY });
+        }
+      };
+
+      const onUp = () => {
+        isResizing.current = false;
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    },
+    [dir, win, resize, move]
+  );
+
+  const posStyle: React.CSSProperties = (() => {
+    const edge = 4;
+    const corner = 12;
+    switch (dir) {
+      case "n":  return { top: 0, left: corner, right: corner, height: edge, cursor: CURSOR_MAP[dir] };
+      case "s":  return { bottom: 0, left: corner, right: corner, height: edge, cursor: CURSOR_MAP[dir] };
+      case "e":  return { right: 0, top: corner, bottom: corner, width: edge, cursor: CURSOR_MAP[dir] };
+      case "w":  return { left: 0, top: corner, bottom: corner, width: edge, cursor: CURSOR_MAP[dir] };
+      case "ne": return { top: 0, right: 0, width: corner, height: corner, cursor: CURSOR_MAP[dir] };
+      case "nw": return { top: 0, left: 0, width: corner, height: corner, cursor: CURSOR_MAP[dir] };
+      case "se": return { bottom: 0, right: 0, width: corner, height: corner, cursor: CURSOR_MAP[dir] };
+      case "sw": return { bottom: 0, left: 0, width: corner, height: corner, cursor: CURSOR_MAP[dir] };
+    }
+  })();
+
+  return (
+    <div
+      className="absolute z-10"
+      style={posStyle}
+      onPointerDown={onPointerDown}
+    />
+  );
 }
 
 export default function Window({ win, children }: Props) {
@@ -19,11 +106,9 @@ export default function Window({ win, children }: Props) {
     if (!isFocused) focus(win.instanceId);
   }, [isFocused, focus, win.instanceId]);
 
-  // Motion values drive position — no CSS top/left conflict with drag transform
   const mx = useMotionValue(win.position.x);
   const my = useMotionValue(win.position.y);
 
-  // Sync store → motion values when position is set externally (open, restore, etc.)
   useEffect(() => { mx.set(win.position.x); }, [win.position.x, mx]);
   useEffect(() => { my.set(win.position.y); }, [win.position.y, my]);
 
@@ -55,17 +140,18 @@ export default function Window({ win, children }: Props) {
       dragMomentum={false}
       dragElastic={0}
       onDragEnd={() => {
-        // Read final position directly from motion values — no offset math needed
-        move(win.instanceId, {
-          x: mx.get(),
-          y: Math.max(0, my.get()),
-        });
+        move(win.instanceId, { x: mx.get(), y: Math.max(0, my.get()) });
       }}
       onPointerDown={handleFocus}
     >
-      {/* ── Title Bar ─────────────────────────────────────────────────────── */}
+      {/* Resize handles (hidden when maximized) */}
+      {!isMax && (["n","s","e","w","ne","nw","se","sw"] as ResizeDir[]).map((dir) => (
+        <ResizeHandle key={dir} dir={dir} win={win} />
+      ))}
+
+      {/* Title Bar */}
       <div
-        className="drag-handle flex items-center gap-2.5 px-4 h-11 shrink-0 select-none relative"
+        className="drag-handle flex items-center gap-2.5 px-4 h-11 shrink-0 select-none relative z-10"
         style={{
           background: isFocused
             ? "linear-gradient(180deg, #1E1E22 0%, #18181C 100%)"
@@ -95,11 +181,10 @@ export default function Window({ win, children }: Props) {
           </span>
         </div>
 
-        {/* Balance spacer */}
         <div className="w-[52px] shrink-0" />
       </div>
 
-      {/* ── Content ──────────────────────────────────────────────────────── */}
+      {/* Content */}
       <div
         className="flex-1 overflow-hidden"
         style={{ color: "#F0EDE6" }}
@@ -111,23 +196,17 @@ export default function Window({ win, children }: Props) {
   );
 }
 
-function TrafficLight({
-  color, hoverIcon, onClick,
-}: {
-  color: string;
-  hoverIcon: string;
-  onClick: () => void;
-}) {
+function TrafficLight({ color, hoverIcon, onClick }: { color: string; hoverIcon: string; onClick: () => void }) {
   return (
     <motion.button
-      className="w-[13px] h-[13px] rounded-full flex items-center justify-center text-[8px] font-bold"
+      className="w-[13px] h-[13px] rounded-full flex items-center justify-center text-[8px] font-bold group"
       style={{ background: color, color: "rgba(0,0,0,0.55)" }}
       whileHover={{ scale: 1.15 }}
       whileTap={{ scale: 0.9 }}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={onClick}
     >
-      <span className="opacity-0 hover:opacity-100 leading-none">{hoverIcon}</span>
+      <span className="opacity-0 group-hover:opacity-100 leading-none">{hoverIcon}</span>
     </motion.button>
   );
 }

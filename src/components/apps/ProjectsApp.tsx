@@ -43,7 +43,7 @@ const PROJECTS: Project[] = [
     status: "active",
   },
   {
-    name: "brian.os",
+    name: "strontium.os",
     description: "This portfolio — a browser-based operating system showcasing all projects.",
     stack: ["Next.js 15", "TypeScript", "Framer Motion", "Zustand", "Tailwind v4"],
     files: ["Desktop.tsx", "Window.tsx", "BootSequence.tsx", "windowStore.ts"],

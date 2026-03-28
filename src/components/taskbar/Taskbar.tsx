@@ -43,7 +43,7 @@ export default function Taskbar() {
             className="text-[11px] font-bold font-mono tracking-[0.18em] uppercase"
             style={{ color: "#C8A97E" }}
           >
-            brian.os
+            strontium.os
           </span>
         </div>
         <div className="w-px h-3.5" style={{ background: "#252528" }} />

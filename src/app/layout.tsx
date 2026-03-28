@@ -6,16 +6,16 @@ const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Brian Ndege — Portfolio OS",
+  title: "strontium.os — Brian Ndege",
   description: "Full-stack developer, AI engineer, and cybersecurity specialist. Interactive OS-style portfolio.",
   openGraph: {
-    title: "Brian Ndege — Portfolio OS",
+    title: "strontium.os — Brian Ndege",
     description: "Full-stack developer, AI engineer, and cybersecurity specialist.",
     type: "website",
   },
   appleWebApp: {
     capable: true,
-    title: "brian.os",
+    title: "strontium.os",
     statusBarStyle: "black-translucent",
   },
   themeColor: "#070708",

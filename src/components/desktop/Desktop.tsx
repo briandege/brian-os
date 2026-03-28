@@ -206,7 +206,7 @@ function Wallpaper() {
         className="absolute bottom-16 right-8 font-mono text-[10px] tracking-widest select-none"
         style={{ color: "#1A1A1E", letterSpacing: "0.2em" }}
       >
-        BRIAN.OS / 2026
+        STRONTIUM.OS / 2026
       </div>
     </div>
   );

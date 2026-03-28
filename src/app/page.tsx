@@ -52,10 +52,10 @@ function WelcomeOverlay({ onEnter }: { onEnter: () => void }) {
             className="text-[56px] font-black tracking-[0.1em] font-mono leading-none tan-glow"
             style={{ color: "#C8A97E" }}
           >
-            brian.os
+            strontium.os
           </div>
           <div className="mt-3 text-[12px] font-mono tracking-[0.22em] uppercase" style={{ color: "#3A3A42" }}>
-            kernel 6.1.0-axira · all systems ready
+            kernel 6.1.0-strontium · all systems ready
           </div>
         </motion.div>
 
@@ -104,7 +104,7 @@ function WelcomeOverlay({ onEnter }: { onEnter: () => void }) {
 
       {/* Bottom version */}
       <div className="absolute bottom-6 font-mono text-[10px] tracking-widest" style={{ color: "#1A1A1E" }}>
-        brian.os / {new Date().getFullYear()}
+        strontium.os / {new Date().getFullYear()}
       </div>
     </motion.div>
   );
