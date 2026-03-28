@@ -1,6 +1,6 @@
 "use client";
-import { useCallback } from "react";
-import { motion, useDragControls, AnimatePresence } from "framer-motion";
+import { useCallback, useEffect } from "react";
+import { motion, useDragControls, useMotionValue } from "framer-motion";
 import { X, Minus, Square } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import type { WindowState } from "@/types";
@@ -19,12 +19,17 @@ export default function Window({ win, children }: Props) {
     if (!isFocused) focus(win.instanceId);
   }, [isFocused, focus, win.instanceId]);
 
+  // Motion values drive position — no CSS top/left conflict with drag transform
+  const mx = useMotionValue(win.position.x);
+  const my = useMotionValue(win.position.y);
+
+  // Sync store → motion values when position is set externally (open, restore, etc.)
+  useEffect(() => { mx.set(win.position.x); }, [win.position.x, mx]);
+  useEffect(() => { my.set(win.position.y); }, [win.position.y, my]);
+
   if (win.isMinimized) return null;
 
   const isMax = win.isMaximized;
-  const posStyle = isMax
-    ? { top: 0, left: 0, width: "100vw", height: "calc(100vh - 48px)" }
-    : { top: win.position.y, left: win.position.x, width: win.size.width, height: win.size.height };
 
   return (
     <motion.div
@@ -33,23 +38,27 @@ export default function Window({ win, children }: Props) {
         isFocused ? "window-focused" : "window-blurred"
       }`}
       style={{
-        ...posStyle,
+        x: isMax ? 0 : mx,
+        y: isMax ? 0 : my,
+        width:  isMax ? "100vw" : win.size.width,
+        height: isMax ? "calc(100vh - 48px)" : win.size.height,
         zIndex: win.zIndex,
         border: `1px solid ${isFocused ? "rgba(200,169,126,0.14)" : "rgba(37,37,40,0.8)"}`,
       }}
-      initial={{ scale: 0.84, opacity: 0, y: 20 }}
-      animate={{ scale: 1, opacity: 1, y: 0 }}
-      exit={{ scale: 0.84, opacity: 0, y: 20, transition: { duration: 0.18 } }}
+      initial={{ scale: 0.84, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={{ scale: 0.84, opacity: 0, transition: { duration: 0.18 } }}
       transition={{ type: "spring" as const, stiffness: 380, damping: 32, mass: 0.85 }}
       drag={!isMax}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}
       dragElastic={0}
-      onDragEnd={(_, info) => {
+      onDragEnd={() => {
+        // Read final position directly from motion values — no offset math needed
         move(win.instanceId, {
-          x: win.position.x + info.offset.x,
-          y: Math.max(0, win.position.y + info.offset.y),
+          x: mx.get(),
+          y: Math.max(0, my.get()),
         });
       }}
       onPointerDown={handleFocus}
