@@ -21,6 +21,8 @@
     "appId": "com.briandege.strontium-os",
     "productName": "strontium.os",
     "copyright": "Copyright © 2026 Brian Ndege",
+    "asar": true,
+    "asarUnpack": ["**/node_modules/node-pty/**", "**/node_modules/systeminformation/**"],
     "directories": {
       "output": "dist",
       "buildResources": "public"
@@ -29,7 +31,8 @@
       "electron/**/*",
       "out/**/*",
       "public/**/*",
-      "!node_modules"
+      "node_modules/**/*",
+      "package.json"
     ],
     "mac": {
       "category": "public.app-category.developer-tools",

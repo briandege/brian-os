@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import BootSequence from "@/components/boot/BootSequence";
 import Desktop from "@/components/desktop/Desktop";
 import { useWindowStore } from "@/lib/windowStore";
+import { useSettingsStore } from "@/lib/settingsStore";
 
 function WelcomeOverlay({ onEnter }: { onEnter: () => void }) {
   useEffect(() => {
@@ -115,14 +116,16 @@ type Phase = "boot" | "welcome" | "desktop";
 export default function Home() {
   const [phase, setPhase] = useState<Phase>("boot");
   const { open } = useWindowStore();
+  const startupApps = useSettingsStore((s) => s.startupApps);
 
   const handleBootComplete = useCallback(() => setPhase("welcome"), []);
 
   const handleEnterDesktop = useCallback(() => {
     setPhase("desktop");
-    setTimeout(() => open("terminal"), 400);
-    setTimeout(() => open("axira"), 750);
-  }, [open]);
+    startupApps.forEach((id, i) => {
+      setTimeout(() => open(id), 400 + i * 350);
+    });
+  }, [open, startupApps]);
 
   return (
     <main className="fixed inset-0" style={{ background: "#080808" }}>

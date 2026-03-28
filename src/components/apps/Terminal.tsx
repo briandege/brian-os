@@ -3,6 +3,7 @@ import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
 import { useWindowStore } from "@/lib/windowStore";
 import { checkHealth, fetchNews, triggerIngest, AXIRA_BASE } from "@/lib/axiraClient";
+import { useSettingsStore, TERMINAL_THEMES } from "@/lib/settingsStore";
 import type { AppId } from "@/types";
 
 // Load real xterm PTY terminal (Electron-only, no SSR)
@@ -24,7 +25,7 @@ Commands:
   neofetch       System & profile snapshot
   open <app>     Open an app (terminal, about, axira, projects,
                    skills, contact, resume, notebook, simulation,
-                   systemmonitor)
+                   systemmonitor, tor, clearnet, settings)
   skills         Open Skills.db
   projects       Open Projects
   axira          Launch AxiraNews
@@ -100,6 +101,7 @@ Web:      axiranews.com`,
 const APP_IDS: AppId[] = [
   "terminal","about","axira","projects","skills",
   "contact","resume","notebook","simulation","systemmonitor",
+  "tor","clearnet","settings",
 ];
 
 type LineType = "banner" | "input" | "output" | "error" | "blank" | "dim" | "success";
@@ -120,7 +122,13 @@ export default function TerminalApp() {
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  // In Electron (with preload), use the real PTY terminal
+  const terminalFontSize = useSettingsStore((s) => s.terminalFontSize);
+  const terminalTheme    = useSettingsStore((s) => s.terminalTheme);
+  const theme            = TERMINAL_THEMES[terminalTheme];
+
+  const [ptyFailed, setPtyFailed] = useState(false);
+
+  // In Electron (with preload), use the real PTY terminal (unless PTY spawn failed)
   const isElectron = typeof window !== "undefined" && !!window.electronAPI;
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines]);
@@ -239,6 +247,7 @@ export default function TerminalApp() {
         break;
       }
       case "about":        open("about");        success("→ opening about.brian");       break;
+      case "settings":     open("settings");     success("→ opening Settings");          break;
 
       case "ls":
         out("total 4");
@@ -317,22 +326,22 @@ export default function TerminalApp() {
 
   const lineStyle = (type: LineType): React.CSSProperties => {
     switch (type) {
-      case "banner":  return { color: "#C8A97E", fontWeight: 600, lineHeight: 1.3 };
-      case "input":   return { color: "#DFC49A" };
-      case "output":  return { color: "#8A8A7A" };
-      case "error":   return { color: "#FF5F57" };
-      case "success": return { color: "#28C840" };
-      case "dim":     return { color: "#3A3A42" };
+      case "banner":  return { color: theme.cursor, fontWeight: 600, lineHeight: 1.3 };
+      case "input":   return { color: theme.fg };
+      case "output":  return { color: theme.fg + "99" };
+      case "error":   return { color: theme.red };
+      case "success": return { color: theme.green };
+      case "dim":     return { color: theme.fg + "44" };
       default:        return { color: "transparent" };
     }
   };
 
-  if (isElectron) return <RealTerminal />;
+  if (isElectron && !ptyFailed) return <RealTerminal onPtyFail={() => setPtyFailed(true)} />;
 
   return (
     <div
-      className="h-full flex flex-col font-mono text-[12.5px] leading-[1.7]"
-      style={{ background: "#060607" }}
+      className="h-full flex flex-col font-mono leading-[1.7]"
+      style={{ background: theme.bg, fontSize: terminalFontSize }}
       onClick={() => inputRef.current?.focus()}
     >
       {/* Output */}
@@ -350,23 +359,23 @@ export default function TerminalApp() {
         className="flex items-center px-4 py-2.5 gap-0 shrink-0"
         style={{ borderTop: "1px solid #111115" }}
       >
-        <span style={{ color: "#7A6348" }}>brian</span>
-        <span style={{ color: "#3A3A42" }}>@strontium</span>
-        <span style={{ color: "#52524E" }}>:~</span>
-        <span style={{ color: "#C8A97E" }}>$ </span>
+        <span style={{ color: theme.cursor + "AA" }}>brian</span>
+        <span style={{ color: theme.fg + "55" }}>@strontium</span>
+        <span style={{ color: theme.fg + "44" }}>:~</span>
+        <span style={{ color: theme.cursor }}>$ </span>
         <input
           ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKey}
           className="flex-1 bg-transparent outline-none"
-          style={{ color: "#F0EDE6", caretColor: "#C8A97E" }}
+          style={{ color: theme.fg, caretColor: theme.cursor }}
           spellCheck={false}
           autoComplete="off"
           autoCorrect="off"
           autoCapitalize="off"
         />
-        <span className="terminal-cursor leading-none" style={{ color: "#C8A97E" }}>█</span>
+        <span className="terminal-cursor leading-none" style={{ color: theme.cursor }}>█</span>
       </div>
     </div>
   );

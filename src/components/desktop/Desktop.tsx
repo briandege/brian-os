@@ -1,5 +1,5 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useWindowStore } from "@/lib/windowStore";
 import Window from "@/components/window/Window";
@@ -17,6 +17,8 @@ import NotebookApp from "@/components/apps/NotebookApp";
 import SimulationApp from "@/components/apps/SimulationApp";
 import TorApp from "@/components/apps/TorApp";
 import ClearnetApp from "@/components/apps/ClearnetApp";
+import SettingsApp from "@/components/apps/SettingsApp";
+import { useSettingsStore, applyAccent } from "@/lib/settingsStore";
 import type { AppId } from "@/types";
 
 function AppContent({ appId }: { appId: AppId }) {
@@ -33,6 +35,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "simulation":    return <SimulationApp />;
     case "tor":           return <TorApp />;
     case "clearnet":      return <ClearnetApp />;
+    case "settings":      return <SettingsApp />;
   }
 }
 
@@ -45,6 +48,10 @@ interface ContextItem {
 export default function Desktop() {
   const { windows, open, closeAll } = useWindowStore();
   const [ctx, setCtx] = useState<{ x: number; y: number } | null>(null);
+  const accent = useSettingsStore((s) => s.accent);
+
+  // Apply accent color on mount and whenever it changes
+  useEffect(() => { applyAccent(accent); }, [accent]);
 
   const menuItems: ContextItem[] = [
     { label: "Open Terminal",    action: () => open("terminal") },
@@ -131,44 +138,71 @@ export default function Desktop() {
 
 // ── Wallpaper ──────────────────────────────────────────────────────────────
 function Wallpaper() {
+  const wallpaper = useSettingsStore((s) => s.wallpaper);
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
 
       {/* ① Deep void base */}
       <div className="absolute inset-0" style={{ background: "#050506" }} />
 
-      {/* ② Circuit trace grid — PCB-style amber */}
-      <svg
-        className="absolute inset-0 w-full h-full"
-        style={{ opacity: 0.45 }}
-        preserveAspectRatio="xMidYMid slice"
-      >
-        <defs>
-          <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
-            <circle cx="20" cy="20" r="0.8" fill="#C8A97E" opacity="0.9" />
-          </pattern>
-          <pattern id="circuit" width="160" height="160" patternUnits="userSpaceOnUse">
-            <rect width="160" height="160" fill="url(#dots)" />
-            <line x1="0"   y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.8" />
-            <line x1="80"  y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
-            <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
-            <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.7" opacity="0.6" />
-            <circle cx="40"  cy="40"  r="3"   fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.85" />
-            <circle cx="120" cy="120" r="3"   fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.7" />
-            <circle cx="40"  cy="120" r="2"   fill="#C8A97E" opacity="0.45" />
-            <circle cx="120" cy="40"  r="2"   fill="#C8A97E" opacity="0.45" />
-          </pattern>
-          <radialGradient id="wp-fade" cx="50%" cy="50%" r="60%">
-            <stop offset="0%"   stopColor="white" stopOpacity="1"   />
-            <stop offset="65%"  stopColor="white" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
-          </radialGradient>
-          <mask id="wp-mask">
-            <rect width="100%" height="100%" fill="url(#wp-fade)" />
-          </mask>
-        </defs>
-        <rect width="100%" height="100%" fill="url(#circuit)" mask="url(#wp-mask)" />
-      </svg>
+      {/* ② Background pattern — switches with wallpaper setting */}
+      {wallpaper === "grid" && (
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.45 }} preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="wp-dot-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="0.8" fill="#C8A97E" opacity="0.9" />
+            </pattern>
+            <pattern id="wp-circuit" width="160" height="160" patternUnits="userSpaceOnUse">
+              <rect width="160" height="160" fill="url(#wp-dot-grid)" />
+              <line x1="0"   y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.8" />
+              <line x1="80"  y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
+              <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
+              <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.7" opacity="0.6" />
+              <circle cx="40"  cy="40"  r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.85" />
+              <circle cx="120" cy="120" r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.7" />
+              <circle cx="40"  cy="120" r="2" fill="#C8A97E" opacity="0.45" />
+              <circle cx="120" cy="40"  r="2" fill="#C8A97E" opacity="0.45" />
+            </pattern>
+            <radialGradient id="wp-fade-grid" cx="50%" cy="50%" r="60%">
+              <stop offset="0%"   stopColor="white" stopOpacity="1"   />
+              <stop offset="65%"  stopColor="white" stopOpacity="0.6" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+            </radialGradient>
+            <mask id="wp-mask-grid">
+              <rect width="100%" height="100%" fill="url(#wp-fade-grid)" />
+            </mask>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#wp-circuit)" mask="url(#wp-mask-grid)" />
+        </svg>
+      )}
+      {wallpaper === "dots" && (
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.5 }} preserveAspectRatio="xMidYMid slice">
+          <defs>
+            <pattern id="wp-dots" width="28" height="28" patternUnits="userSpaceOnUse">
+              <circle cx="14" cy="14" r="1.2" fill="#C8A97E" opacity="0.85" />
+            </pattern>
+            <radialGradient id="wp-fade-dots" cx="50%" cy="50%" r="60%">
+              <stop offset="0%"   stopColor="white" stopOpacity="1"   />
+              <stop offset="65%"  stopColor="white" stopOpacity="0.5" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.05" />
+            </radialGradient>
+            <mask id="wp-mask-dots">
+              <rect width="100%" height="100%" fill="url(#wp-fade-dots)" />
+            </mask>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#wp-dots)" mask="url(#wp-mask-dots)" />
+        </svg>
+      )}
+      {wallpaper === "noise" && (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E")`,
+            backgroundSize: "200px 200px",
+            opacity: 0.35,
+          }}
+        />
+      )}
 
       {/* ③ Phosphor amber center glow */}
       <div

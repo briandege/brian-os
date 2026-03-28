@@ -1,12 +1,39 @@
 "use client";
 import { useEffect, useRef } from "react";
+import { useSettingsStore, TERMINAL_THEMES } from "@/lib/settingsStore";
 
 
-export default function RealTerminal() {
+export default function RealTerminal({ onPtyFail }: { onPtyFail?: () => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const termRef      = useRef<import("@xterm/xterm").Terminal | null>(null);
   const fitRef       = useRef<import("@xterm/addon-fit").FitAddon | null>(null);
   const cleanupRef   = useRef<(() => void)[]>([]);
+
+  const terminalFontSize  = useSettingsStore((s) => s.terminalFontSize);
+  const terminalTheme     = useSettingsStore((s) => s.terminalTheme);
+  const terminalCursor    = useSettingsStore((s) => s.terminalCursor);
+  const terminalScrollback = useSettingsStore((s) => s.terminalScrollback);
+
+  // Apply theme/font changes to running terminal without remounting
+  useEffect(() => {
+    const term = termRef.current;
+    if (!term) return;
+    const t = TERMINAL_THEMES[terminalTheme];
+    term.options.fontSize    = terminalFontSize;
+    term.options.cursorStyle = terminalCursor;
+    term.options.scrollback  = terminalScrollback;
+    term.options.theme = {
+      background: t.bg, foreground: t.fg, cursor: t.cursor,
+      cursorAccent: t.bg, selectionBackground: t.selection,
+      black: "#1E1E22", red: t.red, green: t.green,
+      yellow: t.yellow, blue: t.blue, magenta: t.magenta,
+      cyan: t.blue, white: t.fg,
+      brightBlack: "#3A3A42", brightRed: t.red, brightGreen: t.green,
+      brightYellow: t.yellow, brightBlue: t.blue, brightMagenta: t.magenta,
+      brightCyan: t.blue, brightWhite: "#F0EDE6",
+    };
+    fitRef.current?.fit();
+  }, [terminalFontSize, terminalTheme, terminalCursor, terminalScrollback]);
 
   useEffect(() => {
     if (!containerRef.current || !window.electronAPI) return;
@@ -22,35 +49,23 @@ export default function RealTerminal() {
 
       if (!mounted || !containerRef.current) return;
 
+      const t = TERMINAL_THEMES[terminalTheme];
       const term = new Terminal({
         fontFamily: '"GeistMono", "Geist Mono", "JetBrains Mono", monospace',
-        fontSize: 13,
-        lineHeight: 1.5,
+        fontSize:    terminalFontSize,
+        lineHeight:  1.5,
         cursorBlink: true,
-        cursorStyle: "block",
-        scrollback: 5000,
+        cursorStyle: terminalCursor,
+        scrollback:  terminalScrollback,
         theme: {
-          background:      "#060607",
-          foreground:      "#C8C6C0",
-          cursor:          "#C8A97E",
-          cursorAccent:    "#060607",
-          selectionBackground: "rgba(200,169,126,0.2)",
-          black:           "#1E1E22",
-          red:             "#FF5F57",
-          green:           "#28C840",
-          yellow:          "#FEBC2E",
-          blue:            "#5AC8FA",
-          magenta:         "#B48EAD",
-          cyan:            "#5AC8FA",
-          white:           "#C8C6C0",
-          brightBlack:     "#3A3A42",
-          brightRed:       "#FF5F57",
-          brightGreen:     "#28C840",
-          brightYellow:    "#FEBC2E",
-          brightBlue:      "#5AC8FA",
-          brightMagenta:   "#B48EAD",
-          brightCyan:      "#5AC8FA",
-          brightWhite:     "#F0EDE6",
+          background: t.bg, foreground: t.fg, cursor: t.cursor,
+          cursorAccent: t.bg, selectionBackground: t.selection,
+          black: "#1E1E22", red: t.red, green: t.green,
+          yellow: t.yellow, blue: t.blue, magenta: t.magenta,
+          cyan: t.blue, white: t.fg,
+          brightBlack: "#3A3A42", brightRed: t.red, brightGreen: t.green,
+          brightYellow: t.yellow, brightBlue: t.blue, brightMagenta: t.magenta,
+          brightCyan: t.blue, brightWhite: "#F0EDE6",
         },
       });
 
@@ -69,7 +84,14 @@ export default function RealTerminal() {
       cleanupRef.current.push(() => inputDispose.dispose());
 
       // Spawn the real shell
-      await window.electronAPI!.ptyCreate(term.cols, term.rows);
+      try {
+        await window.electronAPI!.ptyCreate(term.cols, term.rows);
+      } catch (e) {
+        term.writeln("\r\n\x1b[31mPTY failed to spawn — falling back to mock terminal\x1b[0m");
+        term.dispose();
+        onPtyFail?.();
+        return;
+      }
 
       // Stream PTY output into xterm
       const offData = window.electronAPI!.onPtyData((data) => term.write(data));
@@ -108,11 +130,12 @@ export default function RealTerminal() {
     };
   }, []);
 
+  const bgColor = TERMINAL_THEMES[terminalTheme].bg;
   return (
     <div
       ref={containerRef}
       className="h-full w-full"
-      style={{ background: "#060607", padding: "6px 8px" }}
+      style={{ background: bgColor, padding: "6px 8px" }}
     />
   );
 }

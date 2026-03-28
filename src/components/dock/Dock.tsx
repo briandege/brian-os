@@ -10,6 +10,7 @@ import {
   Activity, Database, Mail, FileText, BookOpen, Zap, Globe, Settings,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
+import { useSettingsStore } from "@/lib/settingsStore";
 import type { AppId } from "@/types";
 import { APP_REGISTRY } from "@/lib/apps";
 
@@ -33,6 +34,7 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
   const ref = useRef<HTMLDivElement>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const { open, windows } = useWindowStore();
+  const dockMagnification = useSettingsStore((s) => s.dockMagnification);
   const meta = APP_META[app.id];
 
   const isOpen_ = windows.some((w) => w.appId === app.id && !w.isMinimized);
@@ -45,8 +47,8 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
     return Math.abs(x - (rect.left + rect.width / 2));
   });
 
-  const scaleRaw = useTransform(distance, [0, 70, 130], [1.6, 1.2, 1], { clamp: true });
-  const yRaw     = useTransform(distance, [0, 70, 130], [-16, -5, 0],  { clamp: true });
+  const scaleRaw = useTransform(distance, [0, 70, 130], dockMagnification ? [1.6, 1.2, 1] : [1, 1, 1], { clamp: true });
+  const yRaw     = useTransform(distance, [0, 70, 130], dockMagnification ? [-16, -5, 0] : [0, 0, 0],  { clamp: true });
 
   const scale = useSpring(scaleRaw, { stiffness: 420, damping: 28, mass: 0.6 });
   const y     = useSpring(yRaw,     { stiffness: 420, damping: 28, mass: 0.6 });
