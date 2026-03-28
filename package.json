@@ -5,21 +5,68 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "next build --turbopack",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "electron": "NODE_ENV=development electron .",
-    "electron:dev": "concurrently \"next dev --turbopack --port 3002\" \"wait-on http://localhost:3002 && ELECTRON_PORT=3002 npm run electron\"",
-    "electron:build": "next build --turbopack && next export && electron-builder"
+
+    "electron": "cross-env NODE_ENV=development electron .",
+    "electron:dev": "concurrently \"next dev --turbopack --port 3002\" \"wait-on http://localhost:3002 && cross-env NODE_ENV=development ELECTRON_PORT=3002 electron .\"",
+
+    "dist":       "next build && electron-builder",
+    "dist:mac":   "next build && electron-builder --mac",
+    "dist:win":   "next build && electron-builder --win",
+    "dist:linux": "next build && electron-builder --linux",
+    "dist:all":   "next build && electron-builder --mac --win --linux"
   },
   "build": {
     "appId": "com.briandege.strontium-os",
     "productName": "strontium.os",
-    "directories": { "output": "dist" },
-    "files": ["electron/**/*", "out/**/*", "public/**/*"],
+    "copyright": "Copyright © 2026 Brian Ndege",
+    "directories": {
+      "output": "dist",
+      "buildResources": "public"
+    },
+    "files": [
+      "electron/**/*",
+      "out/**/*",
+      "public/**/*",
+      "!node_modules"
+    ],
     "mac": {
       "category": "public.app-category.developer-tools",
-      "target": [{ "target": "dmg", "arch": ["arm64", "x64"] }]
+      "icon": "public/icon.icns",
+      "target": [
+        { "target": "dmg", "arch": ["arm64", "x64"] },
+        { "target": "zip", "arch": ["arm64", "x64"] }
+      ],
+      "darkModeSupport": true
+    },
+    "win": {
+      "icon": "public/icon.ico",
+      "target": [
+        { "target": "nsis",     "arch": ["x64", "arm64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "strontium.os"
+    },
+    "linux": {
+      "icon": "public/icon.png",
+      "target": [
+        { "target": "AppImage", "arch": ["x64", "arm64"] },
+        { "target": "deb",      "arch": ["x64"] },
+        { "target": "rpm",      "arch": ["x64"] }
+      ],
+      "category": "Development",
+      "description": "strontium.os — a portfolio OS by Brian Ndege",
+      "maintainer": "Brian Ndege"
     }
   },
   "dependencies": {
@@ -37,6 +84,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "concurrently": "^9.2.1",
+    "cross-env": "^10.1.0",
     "electron": "^41.1.0",
     "electron-builder": "^26.8.1",
     "eslint": "^9",
