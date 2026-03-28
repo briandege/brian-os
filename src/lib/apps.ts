@@ -64,6 +64,13 @@ export const APP_REGISTRY: AppDefinition[] = [
     defaultSize: { width: 1100, height: 680 },
     minSize: { width: 640, height: 480 },
   },
+  {
+    id: "simulation",
+    label: "Simulation",
+    icon: "Zap",
+    defaultSize: { width: 1000, height: 680 },
+    minSize: { width: 640, height: 440 },
+  },
 ];
 
 export function getApp(id: string): AppDefinition | undefined {

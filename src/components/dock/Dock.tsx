@@ -3,7 +3,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Terminal, User, Newspaper, FolderOpen,
-  Activity, Database, Mail, FileText, BookOpen,
+  Activity, Database, Mail, FileText, BookOpen, Zap,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import type { AppId } from "@/types";
@@ -20,6 +20,7 @@ const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode
   contact:       { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1510, #24190E)",      icon: <Mail size={20} strokeWidth={1.5} /> },
   resume:        { color: "#F0EDE6", bg: "linear-gradient(145deg, #181818, #222222)",      icon: <FileText size={20} strokeWidth={1.5} /> },
   notebook:      { color: "#F97316", bg: "linear-gradient(145deg, #1A1008, #261606)",      icon: <BookOpen size={20} strokeWidth={1.5} /> },
+  simulation:    { color: "#A78BFA", bg: "linear-gradient(145deg, #14102A, #1E1640)",      icon: <Zap size={20} strokeWidth={1.5} /> },
 };
 
 export default function Dock() {

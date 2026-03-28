@@ -14,6 +14,7 @@ import SkillsApp from "@/components/apps/SkillsApp";
 import ContactApp from "@/components/apps/ContactApp";
 import ResumeApp from "@/components/apps/ResumeApp";
 import NotebookApp from "@/components/apps/NotebookApp";
+import SimulationApp from "@/components/apps/SimulationApp";
 import type { AppId } from "@/types";
 
 function AppContent({ appId }: { appId: AppId }) {
@@ -27,6 +28,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "contact":       return <ContactApp />;
     case "resume":        return <ResumeApp />;
     case "notebook":      return <NotebookApp />;
+    case "simulation":    return <SimulationApp />;
   }
 }
 
@@ -45,7 +47,8 @@ export default function Desktop() {
     { label: "Open AxiraNews",   action: () => open("axira") },
     { label: "About Brian",      action: () => open("about") },
     { label: "View Projects",    action: () => open("projects") },
-    { label: "Open Notebook",    action: () => open("notebook"), separator: true },
+    { label: "Open Notebook",    action: () => open("notebook") },
+    { label: "Run Simulation",   action: () => open("simulation"), separator: true },
     { label: "System Monitor",   action: () => open("systemmonitor") },
     { label: "Close All Windows",action: () => closeAll() },
   ];

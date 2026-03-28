@@ -7,7 +7,8 @@ export type AppId =
   | "contact"
   | "skills"
   | "resume"
-  | "notebook";
+  | "notebook"
+  | "simulation";
 
 export interface AppDefinition {
   id: AppId;
