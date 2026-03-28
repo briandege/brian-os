@@ -129,82 +129,135 @@ export default function Desktop() {
 function Wallpaper() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      {/* Base */}
-      <div className="absolute inset-0" style={{ background: "#070708" }} />
 
-      {/* Topographic line grid — SVG */}
+      {/* ① Deep void base — matches boot screen */}
+      <div className="absolute inset-0" style={{ background: "#050506" }} />
+
+      {/* ② Circuit trace grid — PCB-style amber traces */}
       <svg
         className="absolute inset-0 w-full h-full"
-        style={{ opacity: 0.18 }}
+        style={{ opacity: 0.12 }}
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
-            <path
-              d="M 60 0 L 0 0 0 60"
-              fill="none"
-              stroke="#C8A97E"
-              strokeWidth="0.4"
-              opacity="0.5"
-            />
+          {/* Fine dot grid */}
+          <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
+            <circle cx="20" cy="20" r="0.7" fill="#C8A97E" opacity="0.6" />
           </pattern>
-          <pattern id="grid-major" width="300" height="300" patternUnits="userSpaceOnUse">
-            <rect width="300" height="300" fill="url(#grid)" />
-            <path
-              d="M 300 0 L 0 0 0 300"
-              fill="none"
-              stroke="#C8A97E"
-              strokeWidth="0.8"
-              opacity="0.6"
-            />
+          {/* Circuit trace pattern */}
+          <pattern id="circuit" width="160" height="160" patternUnits="userSpaceOnUse">
+            <rect width="160" height="160" fill="url(#dots)" />
+            {/* Horizontal traces */}
+            <line x1="0" y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.5" opacity="0.5" />
+            <line x1="80" y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.5" opacity="0.4" />
+            {/* Vertical traces */}
+            <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.5" opacity="0.4" />
+            <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.5" opacity="0.3" />
+            {/* Corner pads */}
+            <circle cx="40"  cy="40"  r="2.5" fill="none" stroke="#C8A97E" strokeWidth="0.6" opacity="0.55" />
+            <circle cx="120" cy="120" r="2.5" fill="none" stroke="#C8A97E" strokeWidth="0.6" opacity="0.45" />
+            <circle cx="40"  cy="120" r="1.5" fill="#C8A97E" opacity="0.2" />
+            <circle cx="120" cy="40"  r="1.5" fill="#C8A97E" opacity="0.2" />
           </pattern>
-          <radialGradient id="fade" cx="50%" cy="50%" r="60%">
-            <stop offset="0%" stopColor="white" stopOpacity="1" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
+          {/* Radial fade mask — strong center, fades to edges */}
+          <radialGradient id="wp-fade" cx="50%" cy="50%" r="55%">
+            <stop offset="0%"   stopColor="white" stopOpacity="1"   />
+            <stop offset="60%"  stopColor="white" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="white" stopOpacity="0"   />
           </radialGradient>
-          <mask id="grid-mask">
-            <rect width="100%" height="100%" fill="url(#fade)" />
+          <mask id="wp-mask">
+            <rect width="100%" height="100%" fill="url(#wp-fade)" />
           </mask>
         </defs>
-        <rect width="100%" height="100%" fill="url(#grid-major)" mask="url(#grid-mask)" />
+        <rect width="100%" height="100%" fill="url(#circuit)" mask="url(#wp-mask)" />
       </svg>
 
-      {/* Center radial glow */}
+      {/* ③ Phosphor amber glow — same as boot screen bottom glow */}
       <div
         className="absolute"
         style={{
-          width: 900,
-          height: 600,
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          background:
-            "radial-gradient(ellipse at center, rgba(200,169,126,0.04) 0%, rgba(200,169,126,0.01) 40%, transparent 70%)",
+          inset: 0,
+          background: [
+            "radial-gradient(ellipse 70% 60% at 50% 48%, rgba(200,169,126,0.055) 0%, transparent 65%)",
+            "radial-gradient(ellipse 30% 25% at 50% 50%, rgba(200,169,126,0.025) 0%, transparent 100%)",
+          ].join(", "),
         }}
       />
 
-      {/* Bottom vignette for dock readability */}
+      {/* ④ Scanlines — exact same as boot BootSequence.tsx scanlines */}
       <div
-        className="absolute bottom-0 left-0 right-0 h-64"
+        className="absolute inset-0"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(180deg, transparent 0px, transparent 3px, rgba(0,0,0,0.13) 3px, rgba(0,0,0,0.13) 4px)",
+          zIndex: 2,
+        }}
+      />
+
+      {/* ⑤ CRT vignette — same radial as boot */}
+      <div
+        className="absolute inset-0"
         style={{
           background:
-            "linear-gradient(to top, rgba(7,7,8,0.95) 0%, rgba(7,7,8,0.4) 60%, transparent 100%)",
+            "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.72) 100%)",
+          zIndex: 3,
         }}
       />
 
-      {/* Top vignette */}
+      {/* ⑥ Bottom fade for dock legibility */}
       <div
-        className="absolute top-0 left-0 right-0 h-24"
+        className="absolute bottom-0 left-0 right-0 h-48"
         style={{
           background:
-            "linear-gradient(to bottom, rgba(7,7,8,0.6) 0%, transparent 100%)",
+            "linear-gradient(to top, rgba(5,5,6,0.97) 0%, rgba(5,5,6,0.5) 50%, transparent 100%)",
+          zIndex: 4,
         }}
       />
 
-      {/* Watermark */}
+      {/* ⑦ Top fade under menu bar */}
       <div
-        className="absolute bottom-16 right-8 font-mono text-[10px] tracking-widest select-none"
-        style={{ color: "#1A1A1E", letterSpacing: "0.2em" }}
+        className="absolute top-0 left-0 right-0 h-20"
+        style={{
+          background: "linear-gradient(to bottom, rgba(5,5,6,0.8) 0%, transparent 100%)",
+          zIndex: 4,
+        }}
+      />
+
+      {/* ⑧ Ambient boot-text ghost — ultra-subtle background typography */}
+      <div
+        className="absolute font-mono select-none"
+        style={{
+          bottom: 100,
+          left: 48,
+          fontSize: 10,
+          lineHeight: 1.8,
+          color: "rgba(200,169,126,0.04)",
+          letterSpacing: "0.04em",
+          zIndex: 1,
+          whiteSpace: "pre",
+        }}
+      >
+        {`[ OK ] kernel strontium/6.1.0
+[ OK ] mounting /dev/nvme0n1p2
+[ OK ] starting systemd v252
+[ OK ] network interface eth0
+[ OK ] postgresql 16 :5432
+[ OK ] redis 7.2 :6379
+[ OK ] axira ingestion daemon
+[ OK ] all systems operational`}
+      </div>
+
+      {/* ⑨ Watermark */}
+      <div
+        className="absolute font-mono select-none"
+        style={{
+          bottom: 100,
+          right: 32,
+          fontSize: 9,
+          letterSpacing: "0.22em",
+          color: "rgba(200,169,126,0.06)",
+          zIndex: 5,
+        }}
       >
         STRONTIUM.OS / 2026
       </div>
