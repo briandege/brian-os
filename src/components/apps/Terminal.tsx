@@ -1,8 +1,12 @@
 "use client";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import dynamic from "next/dynamic";
 import { useWindowStore } from "@/lib/windowStore";
 import { checkHealth, fetchNews, triggerIngest, AXIRA_BASE } from "@/lib/axiraClient";
 import type { AppId } from "@/types";
+
+// Load real xterm PTY terminal (Electron-only, no SSR)
+const RealTerminal = dynamic(() => import("./RealTerminal"), { ssr: false });
 
 const PROMPT = "brian@strontium:~$ ";
 
@@ -108,6 +112,10 @@ const INITIAL: Line[] = [
 ];
 
 export default function TerminalApp() {
+  // In Electron (with preload), use the real PTY terminal
+  const isElectron = typeof window !== "undefined" && !!window.electronAPI;
+  if (isElectron) return <RealTerminal />;
+
   const { open } = useWindowStore();
   const [lines, setLines] = useState<Line[]>(INITIAL);
   const [input, setInput] = useState("");

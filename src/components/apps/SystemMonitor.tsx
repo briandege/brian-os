@@ -4,6 +4,16 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Cpu, HardDrive, Globe, Wifi, RefreshCw, ChevronDown } from "lucide-react";
 import { checkHealth, type BackendHealth, AXIRA_BASE } from "@/lib/axiraClient";
 
+// Extend Window type for Electron IPC
+declare global {
+  interface Window {
+    electronAPI?: {
+      getSysInfo: () => Promise<{ cpu: number; ram: number; disk: number }>;
+      onSysInfo:  (cb: (d: { cpu: number; ram: number; disk: number; netRx: number; netTx: number }) => void) => () => void;
+    };
+  }
+}
+
 function useAnimatedValue(target: number, interval = 3000) {
   const [value, setValue] = useState(target);
   const refresh = useCallback(() => {
@@ -14,6 +24,11 @@ function useAnimatedValue(target: number, interval = 3000) {
     return () => clearInterval(id);
   }, [refresh, interval]);
   return [Math.max(0, Math.min(100, value)), refresh] as const;
+}
+
+// Real metrics from Electron IPC — falls back to animated mock values
+function useRealOrMockMetric(mockValue: number, realValue: number | null) {
+  return realValue ?? mockValue;
 }
 
 function Gauge({
@@ -80,10 +95,26 @@ const INITIAL_SERVICES: Svc[] = [
 ];
 
 export default function SystemMonitor() {
-  const [cpu, refreshCpu] = useAnimatedValue(34);
-  const [ram, refreshRam] = useAnimatedValue(58);
-  const [disk, refreshDisk] = useAnimatedValue(47);
-  const [net, refreshNet] = useAnimatedValue(22);
+  // Mock (animated) fallback values
+  const [mockCpu,  refreshCpu]  = useAnimatedValue(34);
+  const [mockRam,  refreshRam]  = useAnimatedValue(58);
+  const [mockDisk, refreshDisk] = useAnimatedValue(47);
+  const [mockNet,  refreshNet]  = useAnimatedValue(22);
+
+  // Real values from Electron IPC (null = not in Electron)
+  const [realMetrics, setRealMetrics] = useState<{ cpu: number; ram: number; disk: number; netRx: number; netTx: number } | null>(null);
+
+  useEffect(() => {
+    if (!window.electronAPI) return;
+    const off = window.electronAPI.onSysInfo((data) => setRealMetrics(data));
+    window.electronAPI.getSysInfo().then((d) => setRealMetrics({ ...d, netRx: 0, netTx: 0 }));
+    return off;
+  }, []);
+
+  const cpu  = useRealOrMockMetric(mockCpu,  realMetrics?.cpu  ?? null);
+  const ram  = useRealOrMockMetric(mockRam,  realMetrics?.ram  ?? null);
+  const disk = useRealOrMockMetric(mockDisk, realMetrics?.disk ?? null);
+  const net  = useRealOrMockMetric(mockNet,  realMetrics ? Math.min(100, ((realMetrics.netRx + realMetrics.netTx) / 125000) * 100) : null);
 
   const [visitors, setVisitors] = useState(371);
   const [visitorData, setVisitorData] = useState(INITIAL_VISITORS);

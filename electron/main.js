@@ -1,22 +1,100 @@
-const { app, BrowserWindow, shell, Menu, session } = require("electron");
+const { app, BrowserWindow, shell, Menu, session, ipcMain } = require("electron");
 const path = require("path");
 
-const isDev = process.env.NODE_ENV !== "production";
+const isDev    = process.env.NODE_ENV !== "production";
 const DEV_PORT = process.env.ELECTRON_PORT || "3002";
-const DEV_URL = `http://localhost:${DEV_PORT}`;
-const isMac   = process.platform === "darwin";
-const isWin   = process.platform === "win32";
+const DEV_URL  = `http://localhost:${DEV_PORT}`;
+const isMac    = process.platform === "darwin";
+const isWin    = process.platform === "win32";
 
-// ── Icon path (platform-specific extension) ──────────────────────────────────
 function getIconPath() {
   const base = path.join(__dirname, "../public");
-  if (isMac)  return path.join(base, "icon.icns");
-  if (isWin)  return path.join(base, "icon.ico");
-  return path.join(base, "icon.png");  // Linux
+  if (isMac) return path.join(base, "icon.icns");
+  if (isWin) return path.join(base, "icon.ico");
+  return path.join(base, "icon.png");
 }
 
+// ── PTY ──────────────────────────────────────────────────────────────────────
+let ptyProcess = null;
+
+function setupPty(win) {
+  let nodePty;
+  try { nodePty = require("node-pty"); } catch (e) {
+    console.warn("node-pty not available:", e.message);
+    return;
+  }
+
+  ipcMain.handle("pty:create", (_, { cols, rows }) => {
+    if (ptyProcess) { try { ptyProcess.kill(); } catch {} ptyProcess = null; }
+    const shell = process.env.SHELL || (isWin ? "cmd.exe" : "bash");
+    ptyProcess = nodePty.spawn(shell, [], {
+      name: "xterm-256color",
+      cols: cols || 80,
+      rows: rows || 24,
+      cwd: process.env.HOME || process.cwd(),
+      env: { ...process.env, TERM: "xterm-256color", COLORTERM: "truecolor" },
+    });
+    ptyProcess.onData((data) => win.webContents.send("pty:data", data));
+    ptyProcess.onExit(({ exitCode }) => {
+      win.webContents.send("pty:exit", exitCode);
+      ptyProcess = null;
+    });
+    return true;
+  });
+
+  ipcMain.on("pty:write",  (_, data)         => ptyProcess?.write(data));
+  ipcMain.on("pty:resize", (_, { cols, rows }) => { try { ptyProcess?.resize(cols, rows); } catch {} });
+  ipcMain.on("pty:destroy", ()               => { try { ptyProcess?.kill(); } catch {} ptyProcess = null; });
+}
+
+// ── System info ───────────────────────────────────────────────────────────────
+let sysInfoTimer = null;
+
+function setupSysInfo(win) {
+  let si;
+  try { si = require("systeminformation"); } catch (e) {
+    console.warn("systeminformation not available:", e.message);
+    return;
+  }
+
+  const collect = async () => {
+    try {
+      const [load, mem, disks, nets] = await Promise.all([
+        si.currentLoad(),
+        si.mem(),
+        si.fsSize(),
+        si.networkStats(),
+      ]);
+      const diskMain = disks.find(d => d.mount === "/") ?? disks[0];
+      const net0     = nets[0] ?? {};
+      win.webContents.send("sysinfo:update", {
+        cpu:   Math.round(load.currentLoad),
+        ram:   Math.round((mem.used / mem.total) * 100),
+        disk:  diskMain ? Math.round(diskMain.use) : 0,
+        netRx: net0.rx_sec ?? 0,
+        netTx: net0.tx_sec ?? 0,
+      });
+    } catch {}
+  };
+
+  ipcMain.handle("sysinfo:get", async () => {
+    try {
+      const [load, mem, disks] = await Promise.all([si.currentLoad(), si.mem(), si.fsSize()]);
+      const diskMain = disks.find(d => d.mount === "/") ?? disks[0];
+      return {
+        cpu:  Math.round(load.currentLoad),
+        ram:  Math.round((mem.used / mem.total) * 100),
+        disk: diskMain ? Math.round(diskMain.use) : 0,
+      };
+    } catch { return { cpu: 0, ram: 0, disk: 0 }; }
+  });
+
+  collect();
+  sysInfoTimer = setInterval(collect, 2000);
+}
+
+// ── Window ────────────────────────────────────────────────────────────────────
 function createWindow() {
-  // Platform-specific window options
   const platformOpts = isMac
     ? { titleBarStyle: "hiddenInset", vibrancy: "under-window" }
     : { frame: true, autoHideMenuBar: true };
@@ -27,85 +105,70 @@ function createWindow() {
     minWidth: 800,
     minHeight: 600,
     backgroundColor: "#070708",
-    show: false,           // avoid white flash on startup
+    show: false,
     ...platformOpts,
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
       webSecurity: true,
+      preload: path.join(__dirname, "preload.js"),
     },
     icon: getIconPath(),
   });
 
-  // Remove native menu bar on all platforms (we have our own UI)
   Menu.setApplicationMenu(null);
+  setupPty(win);
+  setupSysInfo(win);
 
   if (isDev) {
     win.loadURL(DEV_URL);
-    // Uncomment to open DevTools during development:
-    // win.webContents.openDevTools();
   } else {
-    // Static export — load index.html from the out/ directory
     win.loadFile(path.join(__dirname, "../out/index.html"));
   }
 
   win.once("ready-to-show", () => win.show());
 
-  // window.open() calls → open in system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith("http://") || url.startsWith("https://")) {
-      shell.openExternal(url);
-    }
+    if (url.startsWith("http://") || url.startsWith("https://")) shell.openExternal(url);
     return { action: "deny" };
   });
 
-  // Prevent the top-level window from navigating away from the app
   win.webContents.on("will-navigate", (event, url) => {
     if (isDev && url.startsWith(DEV_URL)) return;
     if (!isDev && url.startsWith("file://")) return;
     event.preventDefault();
   });
+
+  win.on("closed", () => {
+    if (sysInfoTimer) { clearInterval(sysInfoTimer); sysInfoTimer = null; }
+    try { ptyProcess?.kill(); } catch {}
+    ptyProcess = null;
+  });
+
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    try {
+      if (!details.responseHeaders) { callback({}); return; }
+      const headers = { ...details.responseHeaders };
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === "x-frame-options") delete headers[key];
+      }
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === "content-security-policy") {
+          headers[key] = headers[key].map(v => v.replace(/frame-ancestors[^;]*(;|$)/gi, ""));
+        }
+      }
+      callback({ responseHeaders: headers });
+    } catch { callback({}); }
+  });
 }
 
 app.whenReady().then(() => {
-  // Strip X-Frame-Options and CSP frame-ancestors so any site loads in-app
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    try {
-      if (!details.responseHeaders) {
-        callback({});
-        return;
-      }
-      const headers = { ...details.responseHeaders };
-
-      for (const key of Object.keys(headers)) {
-        if (key.toLowerCase() === "x-frame-options") {
-          delete headers[key];
-        }
-      }
-
-      for (const key of Object.keys(headers)) {
-        if (key.toLowerCase() === "content-security-policy") {
-          headers[key] = headers[key].map((v) =>
-            v.replace(/frame-ancestors[^;]*(;|$)/gi, "")
-          );
-        }
-      }
-
-      callback({ responseHeaders: headers });
-    } catch (_) {
-      callback({});
-    }
-  });
-
   createWindow();
-
-  // macOS: re-create window when dock icon is clicked and no windows are open
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-// Quit when all windows closed (except macOS — stays in dock)
 app.on("window-all-closed", () => {
   if (!isMac) app.quit();
 });
