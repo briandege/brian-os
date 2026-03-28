@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, RefreshCw, ExternalLink, AlertTriangle, CheckCircle, BookOpen } from "lucide-react";
+import { RefreshCw, ExternalLink, AlertTriangle, BookOpen } from "lucide-react";
 
 const JUPYTER_URL = "http://localhost:8888";
 const JUPYTER_TOKEN = "brianOS";
@@ -130,7 +130,7 @@ export default function NotebookApp() {
                 </div>
                 <div>
                   <span style={{ color: "#3A3A42" }}>    --ServerApp.token=</span>
-                  <span style={{ color: "#C8A97E" }}>'brianOS'</span>
+                  <span style={{ color: "#C8A97E" }}>&apos;brianOS&apos;</span>
                 </div>
               </div>
 

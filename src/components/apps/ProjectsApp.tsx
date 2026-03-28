@@ -64,7 +64,7 @@ export default function ProjectsApp() {
   const toggleFolder = (name: string) => {
     setOpenFolders((prev) => {
       const next = new Set(prev);
-      next.has(name) ? next.delete(name) : next.add(name);
+      if (next.has(name)) { next.delete(name); } else { next.add(name); }
       return next;
     });
   };

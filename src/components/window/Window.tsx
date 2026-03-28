@@ -1,7 +1,6 @@
 "use client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useDragControls, useMotionValue } from "framer-motion";
-import { X, Minus, Square } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import type { WindowState } from "@/types";
 

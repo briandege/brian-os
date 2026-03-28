@@ -349,25 +349,26 @@ function ParticleField({
 }
 
 // ── 2. Network Graph ────────────────────────────────────────────────────────
+const NG_LABELS = ['API', 'Auth', 'DB', 'Redis', 'AI', 'CDN', 'iOS', 'Browser', 'OSINT', 'News'];
+const NG_TYPES  = ['service','service','database','database','ai','cdn','client','client','security','service'];
+const NG_TYPE_COLORS: Record<string, string> = {
+  service: '#C8A97E', database: '#B48EAD', ai: '#5AC8FA',
+  cdn: '#28C840', client: '#FEBC2E', security: '#FF5F57',
+};
+
 function NetworkGraph({
   running, onFps, onTel,
 }: { running: boolean; onFps: (f: number) => void; onTel: (t: TelemetryFrame) => void }) {
   type Node = { x: number; y: number; vx: number; vy: number; label: string; type: string; pulse: number };
   const nodes = useRef<Node[]>([]);
   const edges = useRef<[number, number][]>([]);
-  const LABELS = ['API', 'Auth', 'DB', 'Redis', 'AI', 'CDN', 'iOS', 'Browser', 'OSINT', 'News'];
-  const TYPES  = ['service','service','database','database','ai','cdn','client','client','security','service'];
-  const TYPE_COLORS: Record<string, string> = {
-    service: '#C8A97E', database: '#B48EAD', ai: '#5AC8FA',
-    cdn: '#28C840', client: '#FEBC2E', security: '#FF5F57',
-  };
 
   const init = useCallback((w: number, h: number) => {
-    nodes.current = LABELS.map((label, i) => ({
-      x: w / 2 + Math.cos((i / LABELS.length) * Math.PI * 2) * (Math.min(w, h) * 0.30),
-      y: h / 2 + Math.sin((i / LABELS.length) * Math.PI * 2) * (Math.min(w, h) * 0.30),
+    nodes.current = NG_LABELS.map((label, i) => ({
+      x: w / 2 + Math.cos((i / NG_LABELS.length) * Math.PI * 2) * (Math.min(w, h) * 0.30),
+      y: h / 2 + Math.sin((i / NG_LABELS.length) * Math.PI * 2) * (Math.min(w, h) * 0.30),
       vx: (Math.random() - 0.5) * 0.3, vy: (Math.random() - 0.5) * 0.3,
-      label, type: TYPES[i], pulse: Math.random() * Math.PI * 2,
+      label, type: NG_TYPES[i], pulse: Math.random() * Math.PI * 2,
     }));
     edges.current = [[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],[0,8],[0,9],[1,2],[4,9],[5,6],[5,7]];
   }, []);
@@ -410,7 +411,7 @@ function NetworkGraph({
     }
 
     for (const n of ns) {
-      const color = TYPE_COLORS[n.type] ?? '#C8A97E';
+      const color = NG_TYPE_COLORS[n.type] ?? '#C8A97E';
       const pulse = 0.5 + 0.5 * Math.sin(n.pulse);
       ctx.beginPath(); ctx.arc(n.x, n.y, 16 + 4 * pulse, 0, Math.PI * 2);
       ctx.fillStyle = `${color}14`; ctx.fill();
@@ -436,32 +437,33 @@ function NetworkGraph({
 }
 
 // ── 3. Data Flow ─────────────────────────────────────────────────────────────
+const DF_STAGES = ['Ingest','Parse','Classify','Rank','Cache','Serve'];
+const DF_COLORS  = ['#FF5F57','#FEBC2E','#28C840','#5AC8FA','#C8A97E','#A78BFA'];
+
 function DataFlow({
   running, onFps, onTel,
 }: { running: boolean; onFps: (f: number) => void; onTel: (t: TelemetryFrame) => void }) {
   type Pkt = { x: number; stage: number; progress: number; speed: number; color: string; size: number };
   const packets = useRef<Pkt[]>([]);
   const totalProcessed = useRef(0);
-  const STAGES = ['Ingest','Parse','Classify','Rank','Cache','Serve'];
-  const COLORS  = ['#FF5F57','#FEBC2E','#28C840','#5AC8FA','#C8A97E','#A78BFA'];
 
   const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number, frame: number, dt: number) => {
     ctx.fillStyle = "#060607";
     ctx.fillRect(0, 0, w, h);
 
-    const stageW = w / STAGES.length;
+    const stageW = w / DF_STAGES.length;
     const cy = h / 2;
 
     if (frame % 7 === 0 && packets.current.length < 70) {
-      const idx = Math.floor(Math.random() * COLORS.length);
-      packets.current.push({ x: 0, stage: 0, progress: 0, speed: 0.009 + Math.random() * 0.012, color: COLORS[idx], size: 3 + Math.random() * 3 });
+      const idx = Math.floor(Math.random() * DF_COLORS.length);
+      packets.current.push({ x: 0, stage: 0, progress: 0, speed: 0.009 + Math.random() * 0.012, color: DF_COLORS[idx], size: 3 + Math.random() * 3 });
     }
 
-    for (let i = 0; i < STAGES.length; i++) {
+    for (let i = 0; i < DF_STAGES.length; i++) {
       const x = stageW * i + stageW / 2;
       const grad = ctx.createLinearGradient(stageW * i, 0, stageW * (i + 1), 0);
       grad.addColorStop(0, 'transparent');
-      grad.addColorStop(0.5, `${COLORS[i]}08`);
+      grad.addColorStop(0.5, `${DF_COLORS[i]}08`);
       grad.addColorStop(1, 'transparent');
       ctx.fillStyle = grad;
       ctx.fillRect(stageW * i, 0, stageW, h);
@@ -472,16 +474,16 @@ function DataFlow({
       }
 
       ctx.fillStyle = "#1A1A20"; ctx.font = "bold 10px monospace"; ctx.textAlign = "center";
-      ctx.fillText(STAGES[i].toUpperCase(), x, 24);
+      ctx.fillText(DF_STAGES[i].toUpperCase(), x, 24);
     }
 
     ctx.beginPath(); ctx.strokeStyle = "#111116"; ctx.lineWidth = 1.5; ctx.setLineDash([5, 8]);
     ctx.moveTo(0, cy); ctx.lineTo(w, cy); ctx.stroke(); ctx.setLineDash([]);
 
-    packets.current = packets.current.filter((p) => p.stage < STAGES.length);
+    packets.current = packets.current.filter((p) => p.stage < DF_STAGES.length);
     for (const p of packets.current) {
       p.progress += p.speed * dt;
-      if (p.progress >= 1) { p.stage++; p.progress = 0; if (p.stage >= STAGES.length) totalProcessed.current++; }
+      if (p.progress >= 1) { p.stage++; p.progress = 0; if (p.stage >= DF_STAGES.length) totalProcessed.current++; }
       const sx = stageW * p.stage, ex = stageW * (p.stage + 1);
       p.x = sx + (ex - sx) * p.progress;
       ctx.beginPath(); ctx.arc(p.x, cy, p.size, 0, Math.PI * 2);
@@ -497,7 +499,7 @@ function DataFlow({
     if (frame % 8 === 0) {
       onTel({
         tick: frame, latency: 4 + packets.current.length * 0.3,
-        packets: totalProcessed.current, nodes: STAGES.length,
+        packets: totalProcessed.current, nodes: DF_STAGES.length,
         threatLvl: 0.05, winRate: 0,
         entropy: packets.current.length / 70,
       });
@@ -556,7 +558,7 @@ function MonteCarloViz({
       ctx.beginPath();
       ctx.strokeStyle = p[steps] > 100_000 ? "rgba(40,200,64,0.22)" : "rgba(255,95,87,0.18)";
       ctx.lineWidth = 0.8;
-      for (let i = 0; i <= steps; i++) i === 0 ? ctx.moveTo(toX(i), toY(p[i])) : ctx.lineTo(toX(i), toY(p[i]));
+      for (let i = 0; i <= steps; i++) { if (i === 0) { ctx.moveTo(toX(i), toY(p[i])); } else { ctx.lineTo(toX(i), toY(p[i])); } }
       ctx.stroke();
     }
 
@@ -570,7 +572,7 @@ function MonteCarloViz({
       [...paths.current].map((p) => p[i]).sort((a, b) => a - b)[Math.floor(N / 2)]
     );
     ctx.beginPath(); ctx.strokeStyle = "#A78BFA"; ctx.lineWidth = 2;
-    medians.forEach((v, i) => i === 0 ? ctx.moveTo(toX(i), toY(v)) : ctx.lineTo(toX(i), toY(v)));
+    medians.forEach((v, i) => { if (i === 0) { ctx.moveTo(toX(i), toY(v)); } else { ctx.lineTo(toX(i), toY(v)); } });
     ctx.stroke();
 
     const finals  = paths.current.map((p) => p[steps]);
@@ -591,32 +593,34 @@ function MonteCarloViz({
 }
 
 // ── 5. Threat Heatmap ───────────────────────────────────────────────────────
+const TM_SERVICES = ['CDN','API','Auth','DB','Redis','AI','OSINT','Ingest','SSE','iOS','Web','Admin','Jobs','Cache','Queue','Logs','AV','DNS','Net','LB'];
+const TM_COLS = 20, TM_ROWS = 11;
+
 function ThreatMap({
   running, onFps, onTel,
 }: { running: boolean; onFps: (f: number) => void; onTel: (t: TelemetryFrame) => void }) {
   const grid = useRef<number[][]>([]);
-  const COLS = 20, ROWS = 11;
-  const SERVICES = ['CDN','API','Auth','DB','Redis','AI','OSINT','Ingest','SSE','iOS','Web','Admin','Jobs','Cache','Queue','Logs','AV','DNS','Net','LB'];
 
   useEffect(() => {
-    grid.current = Array.from({ length: ROWS }, () => Array.from({ length: COLS }, () => Math.random() * 0.5));
+    grid.current = Array.from({ length: TM_ROWS }, () => Array.from({ length: TM_COLS }, () => Math.random() * 0.5));
   }, []);
 
-  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number, frame: number, dt: number) => {
+  const draw = useCallback((ctx: CanvasRenderingContext2D, w: number, h: number, frame: number, _dt: number) => {
+    void _dt;
     ctx.fillStyle = "#060607"; ctx.fillRect(0, 0, w, h);
     if (!grid.current.length) return;
 
-    const cellW = w / COLS, cellH = (h - 56) / ROWS;
+    const cellW = w / TM_COLS, cellH = (h - 56) / TM_ROWS;
     let totalThreat = 0, cellCount = 0;
 
     if (frame % 3 === 0) {
-      for (let r = 0; r < ROWS; r++) {
-        for (let c = 0; c < COLS; c++) {
+      for (let r = 0; r < TM_ROWS; r++) {
+        for (let c = 0; c < TM_COLS; c++) {
           const neighbors = [
             grid.current[Math.max(0, r - 1)][c],
-            grid.current[Math.min(ROWS - 1, r + 1)][c],
+            grid.current[Math.min(TM_ROWS - 1, r + 1)][c],
             grid.current[r][Math.max(0, c - 1)],
-            grid.current[r][Math.min(COLS - 1, c + 1)],
+            grid.current[r][Math.min(TM_COLS - 1, c + 1)],
           ];
           const avg = neighbors.reduce((a, b) => a + b, 0) / 4;
           grid.current[r][c] = Math.max(0, Math.min(1,
@@ -625,12 +629,12 @@ function ThreatMap({
         }
       }
       if (Math.random() < 0.06) {
-        grid.current[Math.floor(Math.random() * ROWS)][Math.floor(Math.random() * COLS)] = 0.8 + Math.random() * 0.2;
+        grid.current[Math.floor(Math.random() * TM_ROWS)][Math.floor(Math.random() * TM_COLS)] = 0.8 + Math.random() * 0.2;
       }
     }
 
-    for (let r = 0; r < ROWS; r++) {
-      for (let c = 0; c < COLS; c++) {
+    for (let r = 0; r < TM_ROWS; r++) {
+      for (let c = 0; c < TM_COLS; c++) {
         const v = grid.current[r][c];
         totalThreat += v; cellCount++;
         const x = c * cellW, y = 36 + r * cellH;
@@ -649,9 +653,9 @@ function ThreatMap({
     }
 
     // Column headers
-    for (let c = 0; c < COLS; c++) {
+    for (let c = 0; c < TM_COLS; c++) {
       ctx.fillStyle = "#1A1A20"; ctx.font = "7px monospace"; ctx.textAlign = "center";
-      ctx.fillText(SERVICES[c] ?? '', c * cellW + cellW / 2, 26);
+      ctx.fillText(TM_SERVICES[c] ?? '', c * cellW + cellW / 2, 26);
     }
 
     // Legend
@@ -667,7 +671,7 @@ function ThreatMap({
     ctx.fillText(`avg threat: ${(avgThreat * 100).toFixed(1)}%`, w - 12, h - 8);
 
     if (frame % 6 === 0) {
-      onTel({ tick: frame, latency: 3 + avgThreat * 40, packets: frame * COLS, nodes: COLS * ROWS, threatLvl: avgThreat, winRate: 0, entropy: avgThreat * 2 });
+      onTel({ tick: frame, latency: 3 + avgThreat * 40, packets: frame * TM_COLS, nodes: TM_COLS * TM_ROWS, threatLvl: avgThreat, winRate: 0, entropy: avgThreat * 2 });
     }
   }, [onTel]);
 
