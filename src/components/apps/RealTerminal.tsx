@@ -1,19 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-// Declare the electronAPI bridge injected by preload.js
-declare global {
-  interface Window {
-    electronAPI?: {
-      ptyCreate:  (cols: number, rows: number) => Promise<boolean>;
-      ptyWrite:   (data: string) => void;
-      ptyResize:  (cols: number, rows: number) => void;
-      ptyDestroy: () => void;
-      onPtyData:  (cb: (data: string) => void) => () => void;
-      onPtyExit:  (cb: (code: number) => void) => () => void;
-    };
-  }
-}
 
 export default function RealTerminal() {
   const containerRef = useRef<HTMLDivElement>(null);

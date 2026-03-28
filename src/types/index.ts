@@ -10,7 +10,8 @@ export type AppId =
   | "notebook"
   | "simulation"
   | "tor"
-  | "clearnet";
+  | "clearnet"
+  | "settings";
 
 export interface AppDefinition {
   id: AppId;

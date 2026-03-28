@@ -4,15 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Cpu, HardDrive, Globe, Wifi, RefreshCw, ChevronDown } from "lucide-react";
 import { checkHealth, type BackendHealth, AXIRA_BASE } from "@/lib/axiraClient";
 
-// Extend Window type for Electron IPC
-declare global {
-  interface Window {
-    electronAPI?: {
-      getSysInfo: () => Promise<{ cpu: number; ram: number; disk: number }>;
-      onSysInfo:  (cb: (d: { cpu: number; ram: number; disk: number; netRx: number; netTx: number }) => void) => () => void;
-    };
-  }
-}
 
 function useAnimatedValue(target: number, interval = 3000) {
   const [value, setValue] = useState(target);

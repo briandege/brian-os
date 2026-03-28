@@ -7,7 +7,7 @@ import {
 } from "framer-motion";
 import {
   Terminal, User, Newspaper, FolderOpen,
-  Activity, Database, Mail, FileText, BookOpen, Zap, Globe,
+  Activity, Database, Mail, FileText, BookOpen, Zap, Globe, Settings,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import type { AppId } from "@/types";
@@ -26,6 +26,7 @@ const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode
   simulation:    { color: "#A78BFA", bg: "linear-gradient(145deg, #14102A, #1E1640)",  icon: <Zap size={20} strokeWidth={1.5} /> },
   tor:           { color: "#7D4E8A", bg: "linear-gradient(145deg, #120A18, #1A0F22)",  icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🧅</span> },
   clearnet:      { color: "#FEBC2E", bg: "linear-gradient(145deg, #1A1400, #261E00)",  icon: <Globe size={20} strokeWidth={1.5} /> },
+  settings:      { color: "#9A9A8A", bg: "linear-gradient(145deg, #141414, #1E1E1E)",  icon: <Settings size={20} strokeWidth={1.5} /> },
 };
 
 function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX: MotionValue<number> }) {

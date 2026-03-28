@@ -112,10 +112,6 @@ const INITIAL: Line[] = [
 ];
 
 export default function TerminalApp() {
-  // In Electron (with preload), use the real PTY terminal
-  const isElectron = typeof window !== "undefined" && !!window.electronAPI;
-  if (isElectron) return <RealTerminal />;
-
   const { open } = useWindowStore();
   const [lines, setLines] = useState<Line[]>(INITIAL);
   const [input, setInput] = useState("");
@@ -123,6 +119,9 @@ export default function TerminalApp() {
   const [histIdx, setHistIdx] = useState(-1);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
+
+  // In Electron (with preload), use the real PTY terminal
+  const isElectron = typeof window !== "undefined" && !!window.electronAPI;
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [lines]);
   useEffect(() => { inputRef.current?.focus(); }, []);
@@ -327,6 +326,8 @@ export default function TerminalApp() {
       default:        return { color: "transparent" };
     }
   };
+
+  if (isElectron) return <RealTerminal />;
 
   return (
     <div
