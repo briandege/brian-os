@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion, useDragControls, useMotionValue } from "framer-motion";
 import { X, Minus, Square } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
@@ -112,6 +112,21 @@ export default function Window({ win, children }: Props) {
   useEffect(() => { mx.set(win.position.x); }, [win.position.x, mx]);
   useEffect(() => { my.set(win.position.y); }, [win.position.y, my]);
 
+  // Drag constraints — keep window inside the workspace
+  const MENU_H = 40, DOCK_H = 88;
+  const [constraints, setConstraints] = useState({ left: 0, top: MENU_H, right: 1200, bottom: 800 });
+  useEffect(() => {
+    const update = () => setConstraints({
+      left: 0,
+      top: MENU_H,
+      right: Math.max(200, window.innerWidth - win.size.width),
+      bottom: Math.max(200, window.innerHeight - DOCK_H),
+    });
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, [win.size.width, win.size.height]);
+
   if (win.isMinimized) return null;
 
   const isMax = win.isMaximized;
@@ -126,8 +141,9 @@ export default function Window({ win, children }: Props) {
         x: isMax ? 0 : mx,
         y: isMax ? 0 : my,
         width:  isMax ? "100vw" : win.size.width,
-        height: isMax ? "calc(100vh - 48px)" : win.size.height,
-        zIndex: win.zIndex,
+        top:    isMax ? 40 : undefined,
+        height: isMax ? "calc(100vh - 40px - 88px)" : win.size.height,
+        zIndex: Math.min(win.zIndex, 44), // always below taskbar (50) and dock (45)
         border: `1px solid ${isFocused ? "rgba(200,169,126,0.14)" : "rgba(37,37,40,0.8)"}`,
       }}
       initial={{ scale: 0.84, opacity: 0 }}
@@ -139,8 +155,12 @@ export default function Window({ win, children }: Props) {
       dragListener={false}
       dragMomentum={false}
       dragElastic={0}
+      dragConstraints={isMax ? false : constraints}
       onDragEnd={() => {
-        move(win.instanceId, { x: mx.get(), y: Math.max(0, my.get()) });
+        move(win.instanceId, {
+          x: Math.max(0, Math.min(mx.get(), constraints.right)),
+          y: Math.max(MENU_H, Math.min(my.get(), constraints.bottom)),
+        });
       }}
       onPointerDown={handleFocus}
     >

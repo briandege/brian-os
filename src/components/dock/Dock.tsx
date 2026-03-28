@@ -129,7 +129,7 @@ export default function Dock() {
 
   return (
     <div
-      className="fixed bottom-14 left-1/2 z-30 -translate-x-1/2 flex items-end"
+      className="fixed bottom-4 left-1/2 z-45 -translate-x-1/2 flex items-end"
       onMouseMove={(e) => mouseX.set(e.clientX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >

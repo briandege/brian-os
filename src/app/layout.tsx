@@ -18,12 +18,13 @@ export const metadata: Metadata = {
     title: "strontium.os",
     statusBarStyle: "black-translucent",
   },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
   themeColor: "#070708",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    viewportFit: "cover",
-  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

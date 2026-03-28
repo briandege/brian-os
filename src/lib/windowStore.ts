@@ -7,8 +7,8 @@ let nextZ = 10;
 let instanceCounter = 0;
 
 function stagger(index: number) {
-  const offset = (index % 8) * 28;
-  return { x: 120 + offset, y: 80 + offset };
+  const offset = (index % 8) * 30;
+  return { x: 140 + offset, y: 56 + offset }; // starts below 40px menu bar
 }
 
 interface WindowStore {

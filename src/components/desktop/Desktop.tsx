@@ -63,7 +63,7 @@ export default function Desktop() {
   return (
     <div
       className="fixed inset-0 overflow-hidden"
-      style={{ paddingBottom: 96 }}
+      style={{ paddingTop: 40, paddingBottom: 88 }}
       onContextMenu={handleContextMenu}
       onClick={closeMenu}
     >
