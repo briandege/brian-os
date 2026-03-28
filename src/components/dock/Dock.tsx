@@ -24,6 +24,7 @@ const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode
   resume:        { color: "#F0EDE6", bg: "linear-gradient(145deg, #181818, #222222)",  icon: <FileText size={20} strokeWidth={1.5} /> },
   notebook:      { color: "#F97316", bg: "linear-gradient(145deg, #1A1008, #261606)",  icon: <BookOpen size={20} strokeWidth={1.5} /> },
   simulation:    { color: "#A78BFA", bg: "linear-gradient(145deg, #14102A, #1E1640)",  icon: <Zap size={20} strokeWidth={1.5} /> },
+  tor:           { color: "#7D4E8A", bg: "linear-gradient(145deg, #120A18, #1A0F22)",  icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🧅</span> },
 };
 
 function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX: MotionValue<number> }) {

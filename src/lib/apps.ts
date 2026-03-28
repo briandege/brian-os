@@ -71,6 +71,13 @@ export const APP_REGISTRY: AppDefinition[] = [
     defaultSize: { width: 1000, height: 680 },
     minSize: { width: 640, height: 440 },
   },
+  {
+    id: "tor",
+    label: "Tor Browser",
+    icon: "Shield",
+    defaultSize: { width: 860, height: 600 },
+    minSize: { width: 600, height: 420 },
+  },
 ];
 
 export function getApp(id: string): AppDefinition | undefined {

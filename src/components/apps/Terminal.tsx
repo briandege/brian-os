@@ -171,6 +171,7 @@ export default function TerminalApp() {
       case "notebook":
       case "jupyter":      open("notebook");     success("→ launching JupyterLab");      break;
       case "simulation":   open("simulation");   success("→ launching simulation engine"); break;
+      case "tor":          open("tor");          success("→ launching Tor Browser");        break;
       case "about":        open("about");        success("→ opening about.brian");       break;
 
       case "ls":

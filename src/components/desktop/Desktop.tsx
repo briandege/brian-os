@@ -15,6 +15,7 @@ import ContactApp from "@/components/apps/ContactApp";
 import ResumeApp from "@/components/apps/ResumeApp";
 import NotebookApp from "@/components/apps/NotebookApp";
 import SimulationApp from "@/components/apps/SimulationApp";
+import TorApp from "@/components/apps/TorApp";
 import type { AppId } from "@/types";
 
 function AppContent({ appId }: { appId: AppId }) {
@@ -29,6 +30,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "resume":        return <ResumeApp />;
     case "notebook":      return <NotebookApp />;
     case "simulation":    return <SimulationApp />;
+    case "tor":           return <TorApp />;
   }
 }
 
