@@ -16,6 +16,7 @@ import ResumeApp from "@/components/apps/ResumeApp";
 import NotebookApp from "@/components/apps/NotebookApp";
 import SimulationApp from "@/components/apps/SimulationApp";
 import TorApp from "@/components/apps/TorApp";
+import ClearnetApp from "@/components/apps/ClearnetApp";
 import type { AppId } from "@/types";
 
 function AppContent({ appId }: { appId: AppId }) {
@@ -31,6 +32,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "notebook":      return <NotebookApp />;
     case "simulation":    return <SimulationApp />;
     case "tor":           return <TorApp />;
+    case "clearnet":      return <ClearnetApp />;
   }
 }
 
@@ -132,40 +134,34 @@ function Wallpaper() {
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
 
-      {/* ① Deep void base — matches boot screen */}
+      {/* ① Deep void base */}
       <div className="absolute inset-0" style={{ background: "#050506" }} />
 
-      {/* ② Circuit trace grid — PCB-style amber traces */}
+      {/* ② Circuit trace grid — PCB-style amber */}
       <svg
         className="absolute inset-0 w-full h-full"
-        style={{ opacity: 0.12 }}
+        style={{ opacity: 0.45 }}
         preserveAspectRatio="xMidYMid slice"
       >
         <defs>
-          {/* Fine dot grid */}
           <pattern id="dots" width="40" height="40" patternUnits="userSpaceOnUse">
-            <circle cx="20" cy="20" r="0.7" fill="#C8A97E" opacity="0.6" />
+            <circle cx="20" cy="20" r="0.8" fill="#C8A97E" opacity="0.9" />
           </pattern>
-          {/* Circuit trace pattern */}
           <pattern id="circuit" width="160" height="160" patternUnits="userSpaceOnUse">
             <rect width="160" height="160" fill="url(#dots)" />
-            {/* Horizontal traces */}
-            <line x1="0" y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.5" opacity="0.5" />
-            <line x1="80" y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.5" opacity="0.4" />
-            {/* Vertical traces */}
-            <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.5" opacity="0.4" />
-            <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.5" opacity="0.3" />
-            {/* Corner pads */}
-            <circle cx="40"  cy="40"  r="2.5" fill="none" stroke="#C8A97E" strokeWidth="0.6" opacity="0.55" />
-            <circle cx="120" cy="120" r="2.5" fill="none" stroke="#C8A97E" strokeWidth="0.6" opacity="0.45" />
-            <circle cx="40"  cy="120" r="1.5" fill="#C8A97E" opacity="0.2" />
-            <circle cx="120" cy="40"  r="1.5" fill="#C8A97E" opacity="0.2" />
+            <line x1="0"   y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.8" />
+            <line x1="80"  y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
+            <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
+            <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.7" opacity="0.6" />
+            <circle cx="40"  cy="40"  r="3"   fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.85" />
+            <circle cx="120" cy="120" r="3"   fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.7" />
+            <circle cx="40"  cy="120" r="2"   fill="#C8A97E" opacity="0.45" />
+            <circle cx="120" cy="40"  r="2"   fill="#C8A97E" opacity="0.45" />
           </pattern>
-          {/* Radial fade mask — strong center, fades to edges */}
-          <radialGradient id="wp-fade" cx="50%" cy="50%" r="55%">
+          <radialGradient id="wp-fade" cx="50%" cy="50%" r="60%">
             <stop offset="0%"   stopColor="white" stopOpacity="1"   />
-            <stop offset="60%"  stopColor="white" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="white" stopOpacity="0"   />
+            <stop offset="65%"  stopColor="white" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="white" stopOpacity="0.1" />
           </radialGradient>
           <mask id="wp-mask">
             <rect width="100%" height="100%" fill="url(#wp-fade)" />
@@ -174,58 +170,57 @@ function Wallpaper() {
         <rect width="100%" height="100%" fill="url(#circuit)" mask="url(#wp-mask)" />
       </svg>
 
-      {/* ③ Phosphor amber glow — same as boot screen bottom glow */}
+      {/* ③ Phosphor amber center glow */}
       <div
-        className="absolute"
+        className="absolute inset-0"
         style={{
-          inset: 0,
           background: [
-            "radial-gradient(ellipse 70% 60% at 50% 48%, rgba(200,169,126,0.055) 0%, transparent 65%)",
-            "radial-gradient(ellipse 30% 25% at 50% 50%, rgba(200,169,126,0.025) 0%, transparent 100%)",
+            "radial-gradient(ellipse 80% 65% at 50% 48%, rgba(200,169,126,0.18) 0%, transparent 65%)",
+            "radial-gradient(ellipse 40% 35% at 50% 50%, rgba(200,169,126,0.10) 0%, transparent 100%)",
           ].join(", "),
         }}
       />
 
-      {/* ④ Scanlines — exact same as boot BootSequence.tsx scanlines */}
+      {/* ④ Scanlines */}
       <div
         className="absolute inset-0"
         style={{
           backgroundImage:
-            "repeating-linear-gradient(180deg, transparent 0px, transparent 3px, rgba(0,0,0,0.13) 3px, rgba(0,0,0,0.13) 4px)",
+            "repeating-linear-gradient(180deg, transparent 0px, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)",
           zIndex: 2,
         }}
       />
 
-      {/* ⑤ CRT vignette — same radial as boot */}
+      {/* ⑤ CRT vignette */}
       <div
         className="absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.72) 100%)",
+            "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%)",
           zIndex: 3,
         }}
       />
 
-      {/* ⑥ Bottom fade for dock legibility */}
+      {/* ⑥ Bottom fade */}
       <div
         className="absolute bottom-0 left-0 right-0 h-48"
         style={{
           background:
-            "linear-gradient(to top, rgba(5,5,6,0.97) 0%, rgba(5,5,6,0.5) 50%, transparent 100%)",
+            "linear-gradient(to top, rgba(5,5,6,0.95) 0%, rgba(5,5,6,0.4) 50%, transparent 100%)",
           zIndex: 4,
         }}
       />
 
-      {/* ⑦ Top fade under menu bar */}
+      {/* ⑦ Top fade */}
       <div
         className="absolute top-0 left-0 right-0 h-20"
         style={{
-          background: "linear-gradient(to bottom, rgba(5,5,6,0.8) 0%, transparent 100%)",
+          background: "linear-gradient(to bottom, rgba(5,5,6,0.75) 0%, transparent 100%)",
           zIndex: 4,
         }}
       />
 
-      {/* ⑧ Ambient boot-text ghost — ultra-subtle background typography */}
+      {/* ⑧ Boot-text ghost */}
       <div
         className="absolute font-mono select-none"
         style={{
@@ -233,7 +228,7 @@ function Wallpaper() {
           left: 48,
           fontSize: 10,
           lineHeight: 1.8,
-          color: "rgba(200,169,126,0.04)",
+          color: "rgba(200,169,126,0.12)",
           letterSpacing: "0.04em",
           zIndex: 1,
           whiteSpace: "pre",
@@ -257,7 +252,7 @@ function Wallpaper() {
           right: 32,
           fontSize: 9,
           letterSpacing: "0.22em",
-          color: "rgba(200,169,126,0.06)",
+          color: "rgba(200,169,126,0.14)",
           zIndex: 5,
         }}
       >

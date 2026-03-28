@@ -75,8 +75,15 @@ export const APP_REGISTRY: AppDefinition[] = [
     id: "tor",
     label: "Tor Browser",
     icon: "Shield",
-    defaultSize: { width: 860, height: 600 },
-    minSize: { width: 600, height: 420 },
+    defaultSize: { width: 900, height: 640 },
+    minSize: { width: 640, height: 460 },
+  },
+  {
+    id: "clearnet",
+    label: "Clearnet Browser",
+    icon: "Globe",
+    defaultSize: { width: 900, height: 640 },
+    minSize: { width: 600, height: 440 },
   },
 ];
 

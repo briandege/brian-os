@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell, Menu } = require("electron");
+const { app, BrowserWindow, shell, Menu, session } = require("electron");
 const path = require("path");
 
 const isDev = process.env.NODE_ENV !== "production";
@@ -51,7 +51,7 @@ function createWindow() {
 
   win.once("ready-to-show", () => win.show());
 
-  // Open all external http/https links in the system browser
+  // window.open() calls → open in system browser
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (url.startsWith("http://") || url.startsWith("https://")) {
       shell.openExternal(url);
@@ -59,14 +59,44 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  // Prevent navigation away from the app
+  // Prevent the top-level window from navigating away from the app
   win.webContents.on("will-navigate", (event, url) => {
     if (isDev && url.startsWith(DEV_URL)) return;
+    if (!isDev && url.startsWith("file://")) return;
     event.preventDefault();
   });
 }
 
 app.whenReady().then(() => {
+  // Strip X-Frame-Options and CSP frame-ancestors so any site loads in-app
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    try {
+      if (!details.responseHeaders) {
+        callback({});
+        return;
+      }
+      const headers = { ...details.responseHeaders };
+
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === "x-frame-options") {
+          delete headers[key];
+        }
+      }
+
+      for (const key of Object.keys(headers)) {
+        if (key.toLowerCase() === "content-security-policy") {
+          headers[key] = headers[key].map((v) =>
+            v.replace(/frame-ancestors[^;]*(;|$)/gi, "")
+          );
+        }
+      }
+
+      callback({ responseHeaders: headers });
+    } catch (_) {
+      callback({});
+    }
+  });
+
   createWindow();
 
   // macOS: re-create window when dock icon is clicked and no windows are open

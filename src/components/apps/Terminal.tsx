@@ -171,7 +171,20 @@ export default function TerminalApp() {
       case "notebook":
       case "jupyter":      open("notebook");     success("→ launching JupyterLab");      break;
       case "simulation":   open("simulation");   success("→ launching simulation engine"); break;
-      case "tor":          open("tor");          success("→ launching Tor Browser");        break;
+      case "tor":          open("tor");          success("→ launching Tor Browser");                    break;
+      case "clearnet":
+      case "browser":      open("clearnet");     success("→ launching Clearnet Browser (admin required)"); break;
+      case "sudo": {
+        const sub = args[0];
+        if (sub === "clearnet" || sub === "browser") {
+          open("clearnet"); success("→ root access granted — launching Clearnet Browser");
+        } else if (sub) {
+          err(`sudo: ${sub}: command not found`);
+        } else {
+          err("usage: sudo <command>");
+        }
+        break;
+      }
       case "about":        open("about");        success("→ opening about.brian");       break;
 
       case "ls":

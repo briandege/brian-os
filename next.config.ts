@@ -1,11 +1,14 @@
 import type { NextConfig } from "next";
 
+// Electron production builds need static export (file:// protocol).
+// Vercel + web dev use native Next.js for full performance.
+const isElectronBuild = process.env.NEXT_BUILD_TARGET === "electron";
+
 const nextConfig: NextConfig = {
-  // Static export required for Electron production build
-  output: "export",
-  // Trailing slash ensures correct file paths in Electron file:// protocol
-  trailingSlash: true,
-  // Disable image optimization (not available in static export)
+  ...(isElectronBuild && {
+    output: "export",
+    trailingSlash: true,
+  }),
   images: { unoptimized: true },
 };
 

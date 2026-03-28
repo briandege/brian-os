@@ -12,11 +12,12 @@
     "electron": "cross-env NODE_ENV=development electron .",
     "electron:dev": "concurrently \"next dev --turbopack --port 3002\" \"wait-on http://localhost:3002 && cross-env NODE_ENV=development ELECTRON_PORT=3002 electron .\"",
 
-    "dist":       "next build && electron-builder",
-    "dist:mac":   "next build && electron-builder --mac",
-    "dist:win":   "next build && electron-builder --win",
-    "dist:linux": "next build && electron-builder --linux",
-    "dist:all":   "next build && electron-builder --mac --win --linux"
+    "build:electron": "cross-env NEXT_BUILD_TARGET=electron next build",
+    "dist":       "npm run build:electron && electron-builder",
+    "dist:mac":   "npm run build:electron && electron-builder --mac",
+    "dist:win":   "npm run build:electron && electron-builder --win",
+    "dist:linux": "npm run build:electron && electron-builder --linux",
+    "dist:all":   "npm run build:electron && electron-builder --mac --win --linux"
   },
   "build": {
     "appId": "com.briandege.strontium-os",
