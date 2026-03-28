@@ -2,6 +2,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Activity, Cpu, HardDrive, Globe, Wifi, RefreshCw, ChevronDown } from "lucide-react";
+import { checkHealth, type BackendHealth, AXIRA_BASE } from "@/lib/axiraClient";
 
 function useAnimatedValue(target: number, interval = 3000) {
   const [value, setValue] = useState(target);
@@ -67,12 +68,15 @@ const INITIAL_VISITORS = [
   { country: "CA", flag: "🇨🇦", count: 38 },
 ];
 
-const INITIAL_SERVICES = [
-  { name: "AxiraNews API", status: "online", latency: 12 },
-  { name: "PostgreSQL", status: "online", latency: 3 },
-  { name: "Redis", status: "online", latency: 1 },
-  { name: "Cloudflare CDN", status: "online", latency: 8 },
-  { name: "Railway Deploy", status: "online", latency: 0 },
+type SvcStatus = "online" | "offline" | "degraded" | "checking";
+type Svc = { name: string; status: SvcStatus; latency: number };
+
+const INITIAL_SERVICES: Svc[] = [
+  { name: "AxiraNews API", status: "checking", latency: 0 },
+  { name: "PostgreSQL",    status: "checking", latency: 0 },
+  { name: "Redis",         status: "checking", latency: 0 },
+  { name: "Cloudflare CDN",status: "online",   latency: 8 },
+  { name: "strontium.os",  status: "online",   latency: 0 },
 ];
 
 export default function SystemMonitor() {
@@ -88,6 +92,25 @@ export default function SystemMonitor() {
   const [activeGauge, setActiveGauge] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
+  const [health, setHealth] = useState<BackendHealth | null>(null);
+
+  // Real health check on mount + every 30s
+  const runHealthCheck = useCallback(async () => {
+    const h = await checkHealth();
+    setHealth(h);
+    setServices(prev => prev.map(s => {
+      if (s.name === "AxiraNews API") return { ...s, status: h.api.status, latency: h.api.latencyMs };
+      if (s.name === "PostgreSQL")    return { ...s, status: h.postgres.status, latency: h.postgres.latencyMs };
+      if (s.name === "Redis")         return { ...s, status: h.redis.status, latency: h.redis.latencyMs };
+      return s;
+    }));
+  }, []);
+
+  useEffect(() => {
+    runHealthCheck();
+    const id = setInterval(runHealthCheck, 30000);
+    return () => clearInterval(id);
+  }, [runHealthCheck]);
 
   useEffect(() => {
     const id = setInterval(() => setVisitors((v) => v + Math.floor(Math.random() * 3)), 4000);
@@ -100,11 +123,17 @@ export default function SystemMonitor() {
     setVisitorData((prev) =>
       prev.map((v) => ({ ...v, count: v.count + Math.floor(Math.random() * 8) }))
     );
-    await new Promise((r) => setTimeout(r, 700));
+    await runHealthCheck();
     setRefreshing(false);
-  }, [refreshCpu, refreshRam, refreshDisk, refreshNet]);
+  }, [refreshCpu, refreshRam, refreshDisk, refreshNet, runHealthCheck]);
 
   const pingService = useCallback(async (name: string) => {
+    if (name === "AxiraNews API" || name === "PostgreSQL" || name === "Redis") {
+      setPingingService(name);
+      await runHealthCheck();
+      setPingingService(null);
+      return;
+    }
     setPingingService(name);
     await new Promise((r) => setTimeout(r, 400 + Math.random() * 600));
     setServices((prev) =>
@@ -113,7 +142,7 @@ export default function SystemMonitor() {
       )
     );
     setPingingService(null);
-  }, []);
+  }, [runHealthCheck]);
 
   const maxCount = Math.max(...visitorData.map((v) => v.count));
 
@@ -123,9 +152,12 @@ export default function SystemMonitor() {
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold" style={{ color: "#F5F5F0" }}>System Monitor</h2>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1.5 text-xs" style={{ color: "#D4B896" }}>
-            <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#28C840" }} />
-            All systems operational
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-1.5 h-1.5 rounded-full animate-pulse"
+              style={{ background: health === null ? "#FEBC2E" : health.reachable ? "#28C840" : "#FF5F57" }} />
+            <span style={{ color: health?.reachable ? "#D4B896" : health === null ? "#FEBC2E" : "#FF5F57" }}>
+              {health === null ? "Checking…" : health.reachable ? `${AXIRA_BASE}` : "Backend offline"}
+            </span>
           </div>
           <motion.button
             onClick={refreshAll}
@@ -231,9 +263,9 @@ export default function SystemMonitor() {
                 <div className="flex items-center gap-2">
                   <motion.div
                     className="w-1.5 h-1.5 rounded-full"
-                    style={{ background: "#28C840" }}
-                    animate={isPinging ? { scale: [1, 1.6, 1], opacity: [1, 0.5, 1] } : {}}
-                    transition={isPinging ? { duration: 0.5, repeat: Infinity } : {}}
+                    style={{ background: s.status === "offline" ? "#FF5F57" : s.status === "checking" ? "#FEBC2E" : "#28C840" }}
+                    animate={isPinging || s.status === "checking" ? { scale: [1, 1.6, 1], opacity: [1, 0.5, 1] } : {}}
+                    transition={isPinging || s.status === "checking" ? { duration: 0.5, repeat: Infinity } : {}}
                   />
                   <span style={{ color: "#9A9A8A" }}>{s.name}</span>
                 </div>

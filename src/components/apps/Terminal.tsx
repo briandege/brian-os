@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, KeyboardEvent } from "react";
 import { useWindowStore } from "@/lib/windowStore";
+import { checkHealth, fetchNews, triggerIngest, AXIRA_BASE } from "@/lib/axiraClient";
 import type { AppId } from "@/types";
 
 const PROMPT = "brian@strontium:~$ ";
@@ -35,6 +36,10 @@ Commands:
   pwd            Working directory
   date           Current date/time
   uname          Kernel info
+  axira status   Check AxiraNews backend health
+  axira news     Fetch latest headlines from backend
+  axira search <q> Search AxiraNews articles
+  axira ingest   Trigger news ingestion (admin)
   clear          Clear terminal  (also Ctrl+L)
   help           This menu
 `.trim();
@@ -182,6 +187,47 @@ export default function TerminalApp() {
           err(`sudo: ${sub}: command not found`);
         } else {
           err("usage: sudo <command>");
+        }
+        break;
+      }
+      case "axira": {
+        const sub2 = args[0];
+        if (!sub2 || sub2 === "status") {
+          out(`Pinging ${AXIRA_BASE}…`);
+          checkHealth().then((h) => {
+            out(`API        ${h.api.status === "online" ? "●" : "○"} ${h.api.status}  ${h.api.latencyMs}ms`);
+            out(`PostgreSQL ${h.postgres.status === "online" ? "●" : "○"} ${h.postgres.status}  ${h.postgres.latencyMs}ms`);
+            out(`Redis      ${h.redis.status === "online" ? "●" : "○"} ${h.redis.status}  ${h.redis.latencyMs}ms`);
+            if (!h.reachable) err("Backend unreachable — is the server running?");
+            else success("All systems nominal");
+            blank();
+          });
+        } else if (sub2 === "news") {
+          out("Fetching headlines…");
+          fetchNews({ limit: 5 }).then((articles) => {
+            if (!articles.length) { err("No articles returned — backend may be offline"); blank(); return; }
+            articles.forEach((a, i) => out(`${i + 1}. [${a.category}] ${a.title}  — ${a.source}`));
+            blank();
+          });
+        } else if (sub2 === "search") {
+          const q = args.slice(1).join(" ");
+          if (!q) { err("usage: axira search <query>"); break; }
+          out(`Searching for "${q}"…`);
+          fetchNews({ search: q, limit: 5 }).then((articles) => {
+            if (!articles.length) { out("No results found"); blank(); return; }
+            articles.forEach((a, i) => out(`${i + 1}. ${a.title}  [${a.category}]`));
+            blank();
+          });
+        } else if (sub2 === "ingest") {
+          out("Triggering ingestion pipeline…");
+          triggerIngest().then((ok) => {
+            if (ok) success("✓ Ingestion triggered successfully");
+            else err("Failed — check auth token or backend status");
+            blank();
+          });
+        } else {
+          err(`axira: unknown subcommand '${sub2}'`);
+          out("Usage: axira [status|news|search <q>|ingest]");
         }
         break;
       }
