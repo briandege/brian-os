@@ -20,7 +20,7 @@ export default function RealTerminal({ onPtyFail }: { onPtyFail?: () => void }) 
     if (!term) return;
     const t = TERMINAL_THEMES[terminalTheme];
     term.options.fontSize    = terminalFontSize;
-    term.options.cursorStyle = terminalCursor;
+    term.options.cursorStyle = terminalCursor as "block" | "bar" | "underline";
     term.options.scrollback  = terminalScrollback;
     term.options.theme = {
       background: t.bg, foreground: t.fg, cursor: t.cursor,
@@ -86,7 +86,7 @@ export default function RealTerminal({ onPtyFail }: { onPtyFail?: () => void }) 
       // Spawn the real shell
       try {
         await window.electronAPI!.ptyCreate(term.cols, term.rows);
-      } catch (e) {
+      } catch {
         term.writeln("\r\n\x1b[31mPTY failed to spawn — falling back to mock terminal\x1b[0m");
         term.dispose();
         onPtyFail?.();
@@ -128,7 +128,8 @@ export default function RealTerminal({ onPtyFail }: { onPtyFail?: () => void }) 
       termRef.current?.dispose();
       termRef.current = null;
     };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onPtyFail]);
 
   const bgColor = TERMINAL_THEMES[terminalTheme].bg;
   return (

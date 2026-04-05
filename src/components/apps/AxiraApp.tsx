@@ -6,6 +6,7 @@ import {
   fetchNews, fetchTopHeadlines, searchNews,
   type AxiraArticle, relativeTime, AXIRA_BASE,
 } from "@/lib/axiraClient";
+import { notify } from "@/lib/notificationStore";
 
 const CATEGORY_COLOR: Record<string, string> = {
   Cybersecurity: "#FF5F57",
@@ -52,10 +53,12 @@ export default function AxiraApp() {
       setArticles(news);
       setHeadlines(heads.length > 0 ? heads : news.slice(0, 6));
       setOnline(true);
+      notify("AxiraNews", `${news.length} articles loaded`, "success", "axira");
     } else {
       setArticles(FALLBACK);
       setHeadlines(FALLBACK);
       setOnline(false);
+      notify("AxiraNews", "Backend offline — showing cached feed", "warning", "axira");
     }
     setLoading(false);
   }, []);

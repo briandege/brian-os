@@ -3,19 +3,19 @@
 
 /* ── Design Tokens ────────────────────────────────────────────────────────── */
 @theme inline {
-  --color-void:         #070708;
-  --color-graphite:     #161618;
-  --color-surface:      #111113;
-  --color-surface-2:    #1A1A1E;
-  --color-border:       #252528;
-  --color-border-light: #2E2E33;
+  --color-void:         #050507;
+  --color-graphite:     #111115;
+  --color-surface:      #0D0D11;
+  --color-surface-2:    #141418;
+  --color-border:       #1E1E24;
+  --color-border-light: #28282F;
   --color-tan:          #C8A97E;
   --color-tan-bright:   #DFC49A;
   --color-tan-dim:      #7A6348;
   --color-tan-ghost:    rgba(200, 169, 126, 0.07);
   --color-bone:         #F0EDE6;
-  --color-muted:        #5A5A62;
-  --color-muted-2:      #3A3A42;
+  --color-muted:        #4A4A58;
+  --color-muted-2:      #2E2E3C;
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -26,73 +26,65 @@
 
 html, body {
   width: 100%; height: 100%;
-  /* Cover the notch + home bar on iPhone */
   min-height: 100dvh;
   overflow: hidden;
-  background: #070708;
+  background: #050507;
   color: #F0EDE6;
   font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   cursor: default;
   user-select: none;
-  /* Prevent iOS bounce scroll */
   overscroll-behavior: none;
-  -webkit-overflow-scrolling: touch;
-  touch-action: pan-x pan-y;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #252528; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #C8A97E; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.06); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(200,169,126,0.3); }
 
-/* ── Glass Surfaces ───────────────────────────────────────────────────────── */
-/* Base glass */
+/* ── Glass Materials ──────────────────────────────────────────────────────── */
 .glass {
-  background: rgba(16, 16, 20, 0.78);
-  backdrop-filter: blur(24px) saturate(140%);
-  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  background: rgba(8, 8, 12, 0.84);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
 }
 
-/* Heavier glass for windows */
 .glass-heavy {
-  background: rgba(14, 14, 17, 0.92);
-  backdrop-filter: blur(40px) saturate(160%);
-  -webkit-backdrop-filter: blur(40px) saturate(160%);
+  background: rgba(9, 9, 13, 0.95);
+  backdrop-filter: blur(52px) saturate(180%);
+  -webkit-backdrop-filter: blur(52px) saturate(180%);
 }
 
-/* Light glass for dock */
 .glass-light {
-  background: rgba(22, 22, 28, 0.65);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
+  background: rgba(16, 16, 22, 0.70);
+  backdrop-filter: blur(40px) saturate(190%);
+  -webkit-backdrop-filter: blur(40px) saturate(190%);
 }
 
 /* ── Window Shadows ───────────────────────────────────────────────────────── */
 .window-focused {
   box-shadow:
     0 0 0 1px rgba(200, 169, 126, 0.18),
-    0 0 0 1px rgba(0,0,0,0.6) inset,
-    0 40px 120px rgba(0,0,0,0.85),
-    0 8px 32px rgba(0,0,0,0.6);
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.5) inset,
+    0 70px 140px rgba(0, 0, 0, 0.95),
+    0 28px 56px  rgba(0, 0, 0, 0.70),
+    0 8px  20px  rgba(0, 0, 0, 0.45);
 }
 .window-blurred {
   box-shadow:
-    0 0 0 1px rgba(37,37,40,0.9),
-    0 20px 60px rgba(0,0,0,0.7);
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 36px 90px  rgba(0, 0, 0, 0.78),
+    0 14px 32px  rgba(0, 0, 0, 0.52);
 }
 
 /* ── Terminal ─────────────────────────────────────────────────────────────── */
-@keyframes blink { 0%,100% { opacity:1; } 49% { opacity:1; } 50%,99% { opacity:0; } }
+@keyframes blink { 0%,49%,100% { opacity:1; } 50%,99% { opacity:0; } }
 .terminal-cursor { animation: blink 1.1s step-end infinite; }
 
-/* ── Boot scan-line CRT effect ────────────────────────────────────────────── */
-@keyframes scanmove { 0% { transform: translateY(0); } 100% { transform: translateY(4px); } }
-.scanlines {
-  position: relative;
-}
+/* ── Scanlines ────────────────────────────────────────────────────────────── */
 .scanlines::before {
   content: '';
   position: absolute;
@@ -101,10 +93,8 @@ html, body {
   pointer-events: none;
   background: repeating-linear-gradient(
     180deg,
-    transparent 0px,
-    transparent 3px,
-    rgba(0,0,0,0.12) 3px,
-    rgba(0,0,0,0.12) 4px
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.1) 3px, rgba(0,0,0,0.1) 4px
   );
 }
 
@@ -114,56 +104,113 @@ html, body {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(ellipse at center,
-    transparent 55%,
-    rgba(0,0,0,0.55) 100%
-  );
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.6) 100%);
   z-index: 1;
 }
 
-/* ── Tan glow utilities ───────────────────────────────────────────────────── */
-.tan-glow    { text-shadow: 0 0 24px rgba(200,169,126,0.35); }
-.tan-glow-sm { text-shadow: 0 0 12px rgba(200,169,126,0.2); }
-.tan-box-glow { box-shadow: 0 0 40px rgba(200,169,126,0.1), 0 0 80px rgba(200,169,126,0.05); }
+/* ── Glow utilities ───────────────────────────────────────────────────────── */
+.tan-glow    { text-shadow: 0 0 32px rgba(200,169,126,0.45), 0 0 64px rgba(200,169,126,0.18); }
+.tan-glow-sm { text-shadow: 0 0 16px rgba(200,169,126,0.28); }
+.tan-box-glow { box-shadow: 0 0 48px rgba(200,169,126,0.09), 0 0 96px rgba(200,169,126,0.04); }
 
-/* ── Window title-bar drag cursor ────────────────────────────────────────── */
+/* ── Drag cursor ──────────────────────────────────────────────────────────── */
 .drag-handle { cursor: grab; }
 .drag-handle:active { cursor: grabbing; }
 
-/* ── Input reset for OS forms ─────────────────────────────────────────────── */
+/* ── OS Input ─────────────────────────────────────────────────────────────── */
 .os-input {
-  background: rgba(255,255,255,0.03);
-  border: 1px solid #252528;
+  background: rgba(255,255,255,0.025);
+  border: 1px solid rgba(255,255,255,0.07);
   color: #F0EDE6;
   caret-color: #C8A97E;
-  transition: border-color 0.15s;
   outline: none;
+  transition: border-color 0.15s, background 0.15s;
 }
-.os-input:focus { border-color: rgba(200,169,126,0.45); }
-.os-input::placeholder { color: #3A3A42; }
+.os-input:focus {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(200,169,126,0.4);
+  box-shadow: 0 0 0 3px rgba(200,169,126,0.06);
+}
+.os-input::placeholder { color: #2A2A38; }
 
-/* ── Noise texture overlay (subtle grain on surfaces) ────────────────────── */
-@keyframes noise {
-  0%,100% { background-position: 0 0; }
-  10% { background-position: -5% -10%; }
-  20% { background-position: -15% 5%; }
-  30% { background-position: 7% -25%; }
-  40% { background-position: 20% 25%; }
-  50% { background-position: -25% 10%; }
-  60% { background-position: 15% 5%; }
-  70% { background-position: 0% 15%; }
-  80% { background-position: 25% 35%; }
-  90% { background-position: -10% 10%; }
+/* ── Noise grain overlay ──────────────────────────────────────────────────── */
+@keyframes grain {
+  0%,100% { transform: translate(0,0); }
+  10%  { transform: translate(-2%,-3%); }
+  20%  { transform: translate(3%,-1%); }
+  30%  { transform: translate(-1%,4%); }
+  40%  { transform: translate(4%,2%); }
+  50%  { transform: translate(-3%,1%); }
+  60%  { transform: translate(2%,-4%); }
+  70%  { transform: translate(-4%,3%); }
+  80%  { transform: translate(1%,-2%); }
+  90%  { transform: translate(3%,4%); }
 }
-.noise::after {
+.grain::after {
   content: '';
   position: absolute;
-  inset: -200%;
-  width: 400%;
-  height: 400%;
-  opacity: 0.025;
+  inset: -100%;
+  width: 300%; height: 300%;
+  opacity: 0.018;
   pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-  animation: noise 0.5s steps(1) infinite;
-  z-index: 0;
+  z-index: 100;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  animation: grain 0.4s steps(1) infinite;
+}
+
+/* ── Focus ring ───────────────────────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid rgba(200,169,126,0.45);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Dock divider ─────────────────────────────────────────────────────────── */
+.dock-divider {
+  width: 1px;
+  align-self: stretch;
+  margin: 8px 4px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    rgba(255,255,255,0.08) 30%,
+    rgba(255,255,255,0.08) 70%,
+    transparent 100%
+  );
+}
+
+/* ── Status dot pulse ─────────────────────────────────────────────────────── */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+.status-dot { animation: pulse-dot 2.6s ease-in-out infinite; }
+
+/* ── Window appear/enter ──────────────────────────────────────────────────── */
+@keyframes window-in {
+  from { opacity: 0; transform: scale(0.92) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── Light mode ─────────────────────────────────────────────────────────────── */
+html[data-theme="light"] {
+  --os-bg: #F0EEE9;
+  --os-surface: #FAFAF8;
+  --os-border: rgba(0,0,0,0.09);
+  --os-text: #1A1A1A;
+  --os-text-muted: rgba(26,26,26,0.55);
+  --os-glass: rgba(240,238,233,0.88);
+  --os-glass-border: rgba(0,0,0,0.07);
+}
+
+html[data-theme="light"] .glass {
+  background: rgba(235,233,228,0.88) !important;
+  backdrop-filter: blur(28px) saturate(150%);
+}
+
+html[data-theme="light"] .glass-light {
+  background: rgba(242,240,235,0.82) !important;
+}
+
+html[data-theme="light"] .glass-heavy {
+  background: rgba(245,244,240,0.97) !important;
 }

@@ -101,7 +101,7 @@ Web:      axiranews.com`,
 const APP_IDS: AppId[] = [
   "terminal","about","axira","projects","skills",
   "contact","resume","notebook","simulation","systemmonitor",
-  "tor","clearnet","settings",
+  "tor","clearnet","settings","quantum",
 ];
 
 type LineType = "banner" | "input" | "output" | "error" | "blank" | "dim" | "success";
@@ -248,6 +248,7 @@ export default function TerminalApp() {
       }
       case "about":        open("about");        success("→ opening about.brian");       break;
       case "settings":     open("settings");     success("→ opening Settings");          break;
+      case "quantum":      open("quantum");      success("→ launching Quantum Lab");     break;
 
       case "ls":
         out("total 4");

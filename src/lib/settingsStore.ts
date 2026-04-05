@@ -42,6 +42,8 @@ interface SettingsState {
   // desktop
   dockMagnification: boolean;
   animationSpeed: AnimationSpeed;
+  colorScheme: "dark" | "light";
+  doNotDisturb: boolean;
   // actions
   setAccent:             (a: AccentColor)      => void;
   setWallpaper:          (w: WallpaperStyle)   => void;
@@ -53,6 +55,8 @@ interface SettingsState {
   setTerminalScrollback: (n: number)           => void;
   setDockMagnification:  (v: boolean)          => void;
   setAnimationSpeed:     (s: AnimationSpeed)   => void;
+  setColorScheme:        (s: "dark" | "light")  => void;
+  setDoNotDisturb:       (v: boolean)          => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -68,6 +72,8 @@ export const useSettingsStore = create<SettingsState>()(
       terminalScrollback:  5000,
       dockMagnification:   true,
       animationSpeed:      "normal",
+      colorScheme:         "dark",
+      doNotDisturb:        false,
 
       setAccent:             (accent)              => set({ accent }),
       setWallpaper:          (wallpaper)           => set({ wallpaper }),
@@ -84,6 +90,8 @@ export const useSettingsStore = create<SettingsState>()(
       setTerminalScrollback: (terminalScrollback)  => set({ terminalScrollback }),
       setDockMagnification:  (dockMagnification)   => set({ dockMagnification }),
       setAnimationSpeed:     (animationSpeed)      => set({ animationSpeed }),
+      setColorScheme:        (colorScheme)          => set({ colorScheme }),
+      setDoNotDisturb:       (doNotDisturb)        => set({ doNotDisturb }),
     }),
     { name: "strontium-settings" }
   )
@@ -97,6 +105,11 @@ export function applyAccent(accent: AccentColor) {
   root.style.setProperty("--color-tan-dim",    p.dim);
   root.style.setProperty("--color-tan-bright", p.bright);
   root.style.setProperty("--color-tan-ghost",  hexToRgba(p.primary, 0.07));
+}
+
+// Apply color scheme on :root
+export function applyColorScheme(scheme: "dark" | "light") {
+  document.documentElement.setAttribute("data-theme", scheme);
 }
 
 function hexToRgba(hex: string, alpha: number) {

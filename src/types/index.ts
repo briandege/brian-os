@@ -11,7 +11,16 @@ export type AppId =
   | "simulation"
   | "tor"
   | "clearnet"
-  | "settings";
+  | "settings"
+  | "quantum"
+  | "ai"
+  | "newsroom"
+  | "calculator"
+  | "notes"
+  | "files"
+  | "calendar"
+  | "mediaplayer"
+  | "clipboard";
 
 export interface AppDefinition {
   id: AppId;

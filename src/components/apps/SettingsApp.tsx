@@ -47,7 +47,7 @@ const ANIMATION_SPEEDS: { id: AnimationSpeed; label: string }[] = [
 
 const STARTUP_ELIGIBLE: AppId[] = [
   "terminal", "axira", "about", "projects",
-  "systemmonitor", "skills", "simulation", "notebook",
+  "systemmonitor", "skills", "simulation", "notebook", "quantum",
 ];
 
 const SHORTCUTS = [
@@ -448,17 +448,35 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
 
 function AboutSection() {
   const [sysInfo, setSysInfo] = useState<{ cpu: number; ram: number; disk: number } | null>(null);
+  const [meta, setMeta] = useState<{ version: string; platform: string; arch: string } | null>(null);
+  const [loginItem, setLoginItem] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.electronAPI) {
-      window.electronAPI.getSysInfo().then(setSysInfo);
-    }
+    if (typeof window === "undefined" || !window.electronAPI) return;
+    window.electronAPI.getSysInfo().then(setSysInfo);
+    Promise.all([
+      window.electronAPI.getVersion?.() ?? Promise.resolve("1.0.0-beta"),
+      window.electronAPI.getPlatform?.() ?? Promise.resolve("darwin"),
+      window.electronAPI.getArch?.() ?? Promise.resolve("arm64"),
+    ]).then(([version, platform, arch]) => setMeta({ version, platform, arch }));
+    window.electronAPI.getLoginItem?.().then(setLoginItem);
   }, []);
+
+  const toggleLogin = async () => {
+    if (!window.electronAPI?.setLoginItem) return;
+    const next = !loginItem;
+    await window.electronAPI.setLoginItem(next);
+    setLoginItem(next);
+  };
+
+  const platformLabel = meta
+    ? { darwin: "macOS", win32: "Windows", linux: "Linux" }[meta.platform] ?? meta.platform
+    : "—";
 
   const rows = [
     { label: "OS",       value: "strontium.os" },
-    { label: "Version",  value: "1.0.0-beta" },
-    { label: "Kernel",   value: "6.1.0-strontium" },
+    { label: "Version",  value: meta?.version ?? "1.0.0-beta" },
+    { label: "Platform", value: meta ? `${platformLabel} · ${meta.arch}` : "—" },
     { label: "Runtime",  value: "Next.js 15 · React 19 · Electron 41" },
     { label: "Author",   value: "Brian Ndege" },
     ...(sysInfo ? [
@@ -482,6 +500,18 @@ function AboutSection() {
           </div>
         ))}
       </div>
+
+      {/* Launch at login — only shown in Electron */}
+      {typeof window !== "undefined" && window.electronAPI?.setLoginItem && (
+        <div className="flex items-center justify-between px-4 py-3 rounded-xl mt-2"
+          style={{ background: "#0C0C0E", border: "1px solid #161618" }}>
+          <div>
+            <div className="text-[12px] font-medium" style={{ color: "#C8C6C0" }}>Launch at Login</div>
+            <div className="text-[11px] mt-0.5" style={{ color: "#3A3A42" }}>Start strontium.os when you log in</div>
+          </div>
+          <Toggle value={loginItem} onChange={toggleLogin} />
+        </div>
+      )}
 
       <motion.button
         className="flex items-center gap-2 mt-4 px-4 py-2 rounded-lg text-[11px]"

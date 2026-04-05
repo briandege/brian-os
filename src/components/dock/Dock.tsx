@@ -7,7 +7,8 @@ import {
 } from "framer-motion";
 import {
   Terminal, User, Newspaper, FolderOpen,
-  Activity, Database, Mail, FileText, BookOpen, Zap, Globe, Settings,
+  Activity, Database, Mail, FileText, BookOpen, Zap, Globe, Settings, Atom,
+  Bot, PenSquare, Calculator, FileEdit, CalendarDays, Music2, Clipboard,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import { useSettingsStore } from "@/lib/settingsStore";
@@ -28,6 +29,15 @@ const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode
   tor:           { color: "#7D4E8A", bg: "linear-gradient(145deg, #120A18, #1A0F22)",  icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🧅</span> },
   clearnet:      { color: "#FEBC2E", bg: "linear-gradient(145deg, #1A1400, #261E00)",  icon: <Globe size={20} strokeWidth={1.5} /> },
   settings:      { color: "#9A9A8A", bg: "linear-gradient(145deg, #141414, #1E1E1E)",  icon: <Settings size={20} strokeWidth={1.5} /> },
+  quantum:       { color: "#5AC8FA", bg: "linear-gradient(145deg, #061520, #0A2030)",  icon: <Atom size={20} strokeWidth={1.5} /> },
+  ai:            { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1508, #261E0A)",  icon: <Bot size={20} strokeWidth={1.5} /> },
+  newsroom:      { color: "#FF5F57", bg: "linear-gradient(145deg, #1F0C0C, #2A1010)",  icon: <PenSquare size={20} strokeWidth={1.5} /> },
+  calculator:    { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1508, #261E0A)",  icon: <Calculator size={20} strokeWidth={1.5} /> },
+  notes:         { color: "#F97316", bg: "linear-gradient(145deg, #1A1008, #261606)",  icon: <FileEdit size={20} strokeWidth={1.5} /> },
+  files:         { color: "#FEBC2E", bg: "linear-gradient(145deg, #1E1800, #2A2206)",  icon: <FolderOpen size={20} strokeWidth={1.5} /> },
+  calendar:      { color: "#5AC8FA", bg: "linear-gradient(145deg, #0A1520, #0E2030)",  icon: <CalendarDays size={20} strokeWidth={1.5} /> },
+  mediaplayer:   { color: "#B48EAD", bg: "linear-gradient(145deg, #18101E, #22162A)",  icon: <Music2 size={20} strokeWidth={1.5} /> },
+  clipboard:     { color: "#9A9A8A", bg: "linear-gradient(145deg, #141414, #1E1E1E)",  icon: <Clipboard size={20} strokeWidth={1.5} /> },
 };
 
 function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX: MotionValue<number> }) {

@@ -4,18 +4,16 @@
   "private": true,
   "main": "electron/main.js",
   "scripts": {
+    "postinstall": "electron-rebuild -f -w node-pty",
+    "start": "concurrently \"next dev --turbopack --port 3002\" \"wait-on http://localhost:3002 && cross-env NODE_ENV=development ELECTRON_PORT=3002 electron .\"",
     "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
     "lint": "eslint",
-    "electron": "cross-env NODE_ENV=development electron .",
-    "electron:dev": "concurrently \"next dev --turbopack --port 3002\" \"wait-on http://localhost:3002 && cross-env NODE_ENV=development ELECTRON_PORT=3002 electron .\"",
-    "build:electron": "cross-env NEXT_BUILD_TARGET=electron next build",
-    "dist": "npm run build:electron && electron-builder",
-    "dist:mac": "npm run build:electron && electron-builder --mac",
-    "dist:win": "npm run build:electron && electron-builder --win",
-    "dist:linux": "npm run build:electron && electron-builder --linux",
-    "dist:all": "npm run build:electron && electron-builder --mac --win --linux"
+    "build:next": "cross-env NEXT_BUILD_TARGET=electron next build",
+    "build": "npm run build:next && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --config.mac.identity=null",
+    "build:mac": "npm run build:next && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --config.mac.identity=null",
+    "build:win": "npm run build:next && electron-builder --win",
+    "build:linux": "npm run build:next && electron-builder --linux",
+    "build:all": "npm run build:next && CSC_IDENTITY_AUTO_DISCOVERY=false electron-builder --mac --win --linux --config.mac.identity=null"
   },
   "build": {
     "appId": "com.briandege.strontium-os",
