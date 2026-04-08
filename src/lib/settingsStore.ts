@@ -44,6 +44,7 @@ interface SettingsState {
   animationSpeed: AnimationSpeed;
   colorScheme: "dark" | "light";
   doNotDisturb: boolean;
+  topSecretBanners: boolean;
   // actions
   setAccent:             (a: AccentColor)      => void;
   setWallpaper:          (w: WallpaperStyle)   => void;
@@ -57,6 +58,7 @@ interface SettingsState {
   setAnimationSpeed:     (s: AnimationSpeed)   => void;
   setColorScheme:        (s: "dark" | "light")  => void;
   setDoNotDisturb:       (v: boolean)          => void;
+  setTopSecretBanners:   (v: boolean)          => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -74,6 +76,7 @@ export const useSettingsStore = create<SettingsState>()(
       animationSpeed:      "normal",
       colorScheme:         "dark",
       doNotDisturb:        false,
+      topSecretBanners:    true,
 
       setAccent:             (accent)              => set({ accent }),
       setWallpaper:          (wallpaper)           => set({ wallpaper }),
@@ -92,6 +95,7 @@ export const useSettingsStore = create<SettingsState>()(
       setAnimationSpeed:     (animationSpeed)      => set({ animationSpeed }),
       setColorScheme:        (colorScheme)          => set({ colorScheme }),
       setDoNotDisturb:       (doNotDisturb)        => set({ doNotDisturb }),
+      setTopSecretBanners:   (topSecretBanners)    => set({ topSecretBanners }),
     }),
     { name: "strontium-settings" }
   )

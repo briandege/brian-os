@@ -76,6 +76,7 @@ export default function SettingsApp() {
     dockMagnification, setDockMagnification,
     animationSpeed, setAnimationSpeed,
     startupApps, toggleStartupApp,
+    topSecretBanners, setTopSecretBanners,
   } = useSettingsStore();
 
   useEffect(() => { applyAccent(accent); }, [accent]);
@@ -158,6 +159,10 @@ export default function SettingsApp() {
           <Section title="Desktop">
             <SettingRow label="Dock Magnification" desc="Icons grow when hovering">
               <Toggle value={dockMagnification} onChange={setDockMagnification} />
+            </SettingRow>
+
+            <SettingRow label="TOP SECRET Banners" desc="Classified document-style top & bottom bars">
+              <Toggle value={topSecretBanners} onChange={setTopSecretBanners} />
             </SettingRow>
 
             <SettingRow label="Animation Speed" desc="Window and UI animation timing">

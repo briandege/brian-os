@@ -16,28 +16,28 @@ import type { AppId } from "@/types";
 import { APP_REGISTRY } from "@/lib/apps";
 
 const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode }> = {
-  terminal:      { color: "#28C840", bg: "linear-gradient(145deg, #0E1F12, #153320)",  icon: <Terminal size={20} strokeWidth={1.5} /> },
-  about:         { color: "#C8A97E", bg: "linear-gradient(145deg, #1E1710, #2A1E12)",  icon: <User size={20} strokeWidth={1.5} /> },
-  axira:         { color: "#5AC8FA", bg: "linear-gradient(145deg, #0A1520, #0E2030)",  icon: <Newspaper size={20} strokeWidth={1.5} /> },
-  projects:      { color: "#FEBC2E", bg: "linear-gradient(145deg, #1E1800, #2A2206)",  icon: <FolderOpen size={20} strokeWidth={1.5} /> },
-  systemmonitor: { color: "#FF5F57", bg: "linear-gradient(145deg, #1F0C0C, #2A1010)",  icon: <Activity size={20} strokeWidth={1.5} /> },
-  skills:        { color: "#B48EAD", bg: "linear-gradient(145deg, #18101E, #22162A)",  icon: <Database size={20} strokeWidth={1.5} /> },
-  contact:       { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1510, #24190E)",  icon: <Mail size={20} strokeWidth={1.5} /> },
-  resume:        { color: "#F0EDE6", bg: "linear-gradient(145deg, #181818, #222222)",  icon: <FileText size={20} strokeWidth={1.5} /> },
-  notebook:      { color: "#F97316", bg: "linear-gradient(145deg, #1A1008, #261606)",  icon: <BookOpen size={20} strokeWidth={1.5} /> },
-  simulation:    { color: "#A78BFA", bg: "linear-gradient(145deg, #14102A, #1E1640)",  icon: <Zap size={20} strokeWidth={1.5} /> },
-  tor:           { color: "#7D4E8A", bg: "linear-gradient(145deg, #120A18, #1A0F22)",  icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🧅</span> },
-  clearnet:      { color: "#FEBC2E", bg: "linear-gradient(145deg, #1A1400, #261E00)",  icon: <Globe size={20} strokeWidth={1.5} /> },
-  settings:      { color: "#9A9A8A", bg: "linear-gradient(145deg, #141414, #1E1E1E)",  icon: <Settings size={20} strokeWidth={1.5} /> },
-  quantum:       { color: "#5AC8FA", bg: "linear-gradient(145deg, #061520, #0A2030)",  icon: <Atom size={20} strokeWidth={1.5} /> },
-  ai:            { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1508, #261E0A)",  icon: <Bot size={20} strokeWidth={1.5} /> },
-  newsroom:      { color: "#FF5F57", bg: "linear-gradient(145deg, #1F0C0C, #2A1010)",  icon: <PenSquare size={20} strokeWidth={1.5} /> },
-  calculator:    { color: "#C8A97E", bg: "linear-gradient(145deg, #1A1508, #261E0A)",  icon: <Calculator size={20} strokeWidth={1.5} /> },
-  notes:         { color: "#F97316", bg: "linear-gradient(145deg, #1A1008, #261606)",  icon: <FileEdit size={20} strokeWidth={1.5} /> },
-  files:         { color: "#FEBC2E", bg: "linear-gradient(145deg, #1E1800, #2A2206)",  icon: <FolderOpen size={20} strokeWidth={1.5} /> },
-  calendar:      { color: "#5AC8FA", bg: "linear-gradient(145deg, #0A1520, #0E2030)",  icon: <CalendarDays size={20} strokeWidth={1.5} /> },
-  mediaplayer:   { color: "#B48EAD", bg: "linear-gradient(145deg, #18101E, #22162A)",  icon: <Music2 size={20} strokeWidth={1.5} /> },
-  clipboard:     { color: "#9A9A8A", bg: "linear-gradient(145deg, #141414, #1E1E1E)",  icon: <Clipboard size={20} strokeWidth={1.5} /> },
+  terminal:      { color: "#34D058", bg: "linear-gradient(145deg, #1A3A22, #224830)",  icon: <Terminal size={20} strokeWidth={1.5} /> },
+  about:         { color: "#DDB87A", bg: "linear-gradient(145deg, #2E2218, #3A2C1C)",  icon: <User size={20} strokeWidth={1.5} /> },
+  axira:         { color: "#60D0FF", bg: "linear-gradient(145deg, #162236, #1C3048)",  icon: <Newspaper size={20} strokeWidth={1.5} /> },
+  projects:      { color: "#FFC940", bg: "linear-gradient(145deg, #2E2608, #3C320C)",  icon: <FolderOpen size={20} strokeWidth={1.5} /> },
+  systemmonitor: { color: "#FF6B6B", bg: "linear-gradient(145deg, #301414, #401A1A)",  icon: <Activity size={20} strokeWidth={1.5} /> },
+  skills:        { color: "#C49EC8", bg: "linear-gradient(145deg, #261830, #32203E)",  icon: <Database size={20} strokeWidth={1.5} /> },
+  contact:       { color: "#DDB87A", bg: "linear-gradient(145deg, #2A2018, #362818)",  icon: <Mail size={20} strokeWidth={1.5} /> },
+  resume:        { color: "#E8E5DE", bg: "linear-gradient(145deg, #282828, #323232)",  icon: <FileText size={20} strokeWidth={1.5} /> },
+  notebook:      { color: "#FF8C42", bg: "linear-gradient(145deg, #2A1A0C, #381F0A)",  icon: <BookOpen size={20} strokeWidth={1.5} /> },
+  simulation:    { color: "#B8A0FF", bg: "linear-gradient(145deg, #201840, #2A2058)",  icon: <Zap size={20} strokeWidth={1.5} /> },
+  tor:           { color: "#9B6BAA", bg: "linear-gradient(145deg, #201430, #2A1A40)",  icon: <span style={{ fontSize: 16, lineHeight: 1 }}>🧅</span> },
+  clearnet:      { color: "#FFC940", bg: "linear-gradient(145deg, #2A2208, #36300A)",  icon: <Globe size={20} strokeWidth={1.5} /> },
+  settings:      { color: "#AAAAAA", bg: "linear-gradient(145deg, #222228, #2C2C34)",  icon: <Settings size={20} strokeWidth={1.5} /> },
+  quantum:       { color: "#60D0FF", bg: "linear-gradient(145deg, #102030, #162A40)",  icon: <Atom size={20} strokeWidth={1.5} /> },
+  ai:            { color: "#DDB87A", bg: "linear-gradient(145deg, #2A2210, #362C14)",  icon: <Bot size={20} strokeWidth={1.5} /> },
+  newsroom:      { color: "#FF6B6B", bg: "linear-gradient(145deg, #301414, #401C1C)",  icon: <PenSquare size={20} strokeWidth={1.5} /> },
+  calculator:    { color: "#DDB87A", bg: "linear-gradient(145deg, #2A2210, #362C14)",  icon: <Calculator size={20} strokeWidth={1.5} /> },
+  notes:         { color: "#FF8C42", bg: "linear-gradient(145deg, #2A1A0C, #381F0A)",  icon: <FileEdit size={20} strokeWidth={1.5} /> },
+  files:         { color: "#FFC940", bg: "linear-gradient(145deg, #2E2608, #3C320C)",  icon: <FolderOpen size={20} strokeWidth={1.5} /> },
+  calendar:      { color: "#60D0FF", bg: "linear-gradient(145deg, #162236, #1C3048)",  icon: <CalendarDays size={20} strokeWidth={1.5} /> },
+  mediaplayer:   { color: "#C49EC8", bg: "linear-gradient(145deg, #261830, #32203E)",  icon: <Music2 size={20} strokeWidth={1.5} /> },
+  clipboard:     { color: "#AAAAAA", bg: "linear-gradient(145deg, #222228, #2C2C34)",  icon: <Clipboard size={20} strokeWidth={1.5} /> },
 };
 
 function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX: MotionValue<number> }) {
@@ -115,7 +115,7 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
             style={{ background: `radial-gradient(circle at 50% 30%, ${meta.color}18, transparent 70%)` }}
           />
         )}
-        <span className="relative z-10" style={{ color: isOpen_ ? meta.color : "#4A4A56" }}>
+        <span className="relative z-10" style={{ color: isOpen_ ? meta.color : `${meta.color}99` }}>
           {meta.icon}
         </span>
       </motion.button>
@@ -141,18 +141,19 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
 
 export default function Dock() {
   const mouseX = useMotionValue(Infinity);
+  const topSecretBanners = useSettingsStore((s) => s.topSecretBanners);
 
   return (
     <div
-      className="fixed bottom-4 left-1/2 z-45 -translate-x-1/2 flex items-end"
+      className="fixed left-1/2 z-45 -translate-x-1/2 flex items-end"
+      style={{ bottom: topSecretBanners ? 32 : 16 }}
       onMouseMove={(e) => mouseX.set(e.clientX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >
       <div
-        className="glass-light flex items-end gap-1.5 px-3 py-2.5 rounded-2xl relative"
+        className="glass-dock flex items-end gap-1.5 px-3 py-2.5 rounded-2xl relative"
         style={{
-          border: "1px solid rgba(255,255,255,0.055)",
-          boxShadow: "0 8px 40px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.04) inset",
+          border: "1px solid rgba(255,255,255,0.12)",
         }}
       >
         <div

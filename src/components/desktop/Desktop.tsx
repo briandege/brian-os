@@ -76,6 +76,7 @@ export default function Desktop() {
   const [switcherIdx, setSwitcherIdx]           = useState(0);
   const accent = useSettingsStore((s) => s.accent);
   const colorScheme = useSettingsStore((s) => s.colorScheme);
+  const topSecretBanners = useSettingsStore((s) => s.topSecretBanners);
 
   const cmdHeld = useRef(false);
 
@@ -224,7 +225,7 @@ export default function Desktop() {
   return (
     <div
       className="fixed inset-0 overflow-hidden"
-      style={{ paddingTop: 40, paddingBottom: 88 }}
+      style={{ paddingTop: topSecretBanners ? 68 : 40, paddingBottom: topSecretBanners ? 116 : 88 }}
       onContextMenu={handleContextMenu}
       onClick={closeMenu}
     >
@@ -303,6 +304,69 @@ export default function Desktop() {
       />
       <NotificationToast />
       <NewsTicker />
+
+      {/* ── TOP SECRET Banners ───────────────────────────────────────────── */}
+      {topSecretBanners && <TopSecretBanner position="top" />}
+      {topSecretBanners && <TopSecretBanner position="bottom" />}
+    </div>
+  );
+}
+
+// ── TOP SECRET Banner ─────────────────────────────────────────────────────
+function TopSecretBanner({ position }: { position: "top" | "bottom" }) {
+  const isTop = position === "top";
+  return (
+    <div
+      className="fixed left-0 right-0 z-[9999] flex items-center justify-between select-none pointer-events-none"
+      style={{
+        [isTop ? "top" : "bottom"]: 0,
+        height: 28,
+        background: "linear-gradient(180deg, #C00000 0%, #8B0000 100%)",
+        boxShadow: isTop
+          ? "0 2px 8px rgba(139,0,0,0.6), inset 0 -1px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,100,100,0.2)"
+          : "0 -2px 8px rgba(139,0,0,0.6), inset 0 1px 0 rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,100,100,0.2)",
+        borderTop: isTop ? "none" : "1px solid rgba(0,0,0,0.4)",
+        borderBottom: isTop ? "1px solid rgba(0,0,0,0.4)" : "none",
+      }}
+    >
+      {/* Left classification markers */}
+      <div className="flex items-center gap-3 pl-4">
+        <span className="font-mono font-black text-[10px] tracking-[0.25em]"
+          style={{ color: "rgba(0,0,0,0.55)" }}>
+          &#47;&#47;TS&#47;&#47;SCI&#47;&#47;NOFORN
+        </span>
+        <div className="w-px h-3" style={{ background: "rgba(0,0,0,0.25)" }} />
+        <span className="font-mono text-[9px] tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>
+          CLASSIFICATION: BRIAN NDEGE EYES ONLY
+        </span>
+      </div>
+
+      {/* Center — main label */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <span
+          className="font-black tracking-[0.35em] text-[13px] uppercase"
+          style={{
+            color: "#000000",
+            fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
+            textShadow: "0 1px 0 rgba(255,80,80,0.3)",
+            letterSpacing: "0.35em",
+          }}
+        >
+          ★ TOP SECRET ★
+        </span>
+      </div>
+
+      {/* Right classification markers */}
+      <div className="flex items-center gap-3 pr-4">
+        <span className="font-mono text-[9px] tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>
+          HANDLE VIA STRONTIUM CHANNELS ONLY
+        </span>
+        <div className="w-px h-3" style={{ background: "rgba(0,0,0,0.25)" }} />
+        <span className="font-mono font-black text-[10px] tracking-[0.25em]"
+          style={{ color: "rgba(0,0,0,0.55)" }}>
+          &#47;&#47;TS&#47;&#47;SCI&#47;&#47;NOFORN
+        </span>
+      </div>
     </div>
   );
 }
@@ -312,29 +376,49 @@ function Wallpaper() {
   const wallpaper = useSettingsStore((s) => s.wallpaper);
   return (
     <div className="absolute inset-0 pointer-events-none overflow-hidden">
-      <div className="absolute inset-0" style={{ background: "#050506" }} />
 
+      {/* Base — rich deep navy, not pure black */}
+      <div className="absolute inset-0" style={{
+        background: "linear-gradient(160deg, #0E1020 0%, #0C0D18 40%, #10090E 100%)",
+      }} />
+
+      {/* Ambient color atmosphere — the "soul" of the wallpaper */}
+      <div className="absolute inset-0" style={{
+        background: [
+          /* warm gold center glow */
+          "radial-gradient(ellipse 70% 55% at 50% 52%, rgba(200,155,80,0.22) 0%, transparent 65%)",
+          /* cool indigo top-left accent */
+          "radial-gradient(ellipse 50% 40% at 15% 20%, rgba(80,100,200,0.14) 0%, transparent 60%)",
+          /* deep purple bottom-right */
+          "radial-gradient(ellipse 45% 35% at 85% 80%, rgba(120,60,180,0.10) 0%, transparent 55%)",
+          /* subtle teal top-right */
+          "radial-gradient(ellipse 35% 30% at 88% 18%, rgba(40,160,180,0.08) 0%, transparent 50%)",
+        ].join(", "),
+        zIndex: 1,
+      }} />
+
+      {/* Pattern layer */}
       {wallpaper === "grid" && (
-        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.45 }} preserveAspectRatio="xMidYMid slice">
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.55, zIndex: 2 }} preserveAspectRatio="xMidYMid slice">
           <defs>
             <pattern id="wp-dot-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <circle cx="20" cy="20" r="0.8" fill="#C8A97E" opacity="0.9" />
+              <circle cx="20" cy="20" r="0.9" fill="#C8A97E" opacity="0.8" />
             </pattern>
             <pattern id="wp-circuit" width="160" height="160" patternUnits="userSpaceOnUse">
               <rect width="160" height="160" fill="url(#wp-dot-grid)" />
-              <line x1="0"   y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.8" />
-              <line x1="80"  y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
-              <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.7" opacity="0.7" />
-              <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.7" opacity="0.6" />
-              <circle cx="40"  cy="40"  r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.85" />
-              <circle cx="120" cy="120" r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.7" />
-              <circle cx="40"  cy="120" r="2" fill="#C8A97E" opacity="0.45" />
-              <circle cx="120" cy="40"  r="2" fill="#C8A97E" opacity="0.45" />
+              <line x1="0"   y1="40"  x2="80"  y2="40"  stroke="#C8A97E" strokeWidth="0.6" opacity="0.7" />
+              <line x1="80"  y1="120" x2="160" y2="120" stroke="#C8A97E" strokeWidth="0.6" opacity="0.6" />
+              <line x1="40"  y1="0"   x2="40"  y2="80"  stroke="#C8A97E" strokeWidth="0.6" opacity="0.6" />
+              <line x1="120" y1="80"  x2="120" y2="160" stroke="#C8A97E" strokeWidth="0.6" opacity="0.55" />
+              <circle cx="40"  cy="40"  r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.9" />
+              <circle cx="120" cy="120" r="3" fill="none" stroke="#C8A97E" strokeWidth="0.8" opacity="0.75" />
+              <circle cx="40"  cy="120" r="2" fill="#C8A97E" opacity="0.5" />
+              <circle cx="120" cy="40"  r="2" fill="#C8A97E" opacity="0.5" />
             </pattern>
-            <radialGradient id="wp-fade-grid" cx="50%" cy="50%" r="60%">
+            <radialGradient id="wp-fade-grid" cx="50%" cy="50%" r="65%">
               <stop offset="0%"   stopColor="white" stopOpacity="1"   />
-              <stop offset="65%"  stopColor="white" stopOpacity="0.6" />
-              <stop offset="100%" stopColor="white" stopOpacity="0.1" />
+              <stop offset="60%"  stopColor="white" stopOpacity="0.65" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.12" />
             </radialGradient>
             <mask id="wp-mask-grid">
               <rect width="100%" height="100%" fill="url(#wp-fade-grid)" />
@@ -344,15 +428,15 @@ function Wallpaper() {
         </svg>
       )}
       {wallpaper === "dots" && (
-        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.5 }} preserveAspectRatio="xMidYMid slice">
+        <svg className="absolute inset-0 w-full h-full" style={{ opacity: 0.6, zIndex: 2 }} preserveAspectRatio="xMidYMid slice">
           <defs>
             <pattern id="wp-dots" width="28" height="28" patternUnits="userSpaceOnUse">
-              <circle cx="14" cy="14" r="1.2" fill="#C8A97E" opacity="0.85" />
+              <circle cx="14" cy="14" r="1.3" fill="#C8A97E" opacity="0.8" />
             </pattern>
-            <radialGradient id="wp-fade-dots" cx="50%" cy="50%" r="60%">
+            <radialGradient id="wp-fade-dots" cx="50%" cy="50%" r="65%">
               <stop offset="0%"   stopColor="white" stopOpacity="1"   />
-              <stop offset="65%"  stopColor="white" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="white" stopOpacity="0.05" />
+              <stop offset="60%"  stopColor="white" stopOpacity="0.55" />
+              <stop offset="100%" stopColor="white" stopOpacity="0.08" />
             </radialGradient>
             <mask id="wp-mask-dots">
               <rect width="100%" height="100%" fill="url(#wp-fade-dots)" />
@@ -362,25 +446,41 @@ function Wallpaper() {
         </svg>
       )}
       {wallpaper === "noise" && (
-        <div
-          className="absolute inset-0"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E")`,
-            backgroundSize: "200px 200px",
-            opacity: 0.35,
-          }}
-        />
+        <div className="absolute inset-0" style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E")`,
+          backgroundSize: "200px 200px",
+          opacity: 0.55,
+          zIndex: 2,
+        }} />
       )}
 
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse 80% 65% at 50% 48%, rgba(200,169,126,0.18) 0%, transparent 65%), radial-gradient(ellipse 40% 35% at 50% 50%, rgba(200,169,126,0.10) 0%, transparent 100%)" }} />
-      <div className="absolute inset-0" style={{ backgroundImage: "repeating-linear-gradient(180deg, transparent 0px, transparent 3px, rgba(0,0,0,0.18) 3px, rgba(0,0,0,0.18) 4px)", zIndex: 2 }} />
-      <div className="absolute inset-0" style={{ background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.65) 100%)", zIndex: 3 }} />
-      <div className="absolute bottom-0 left-0 right-0 h-48" style={{ background: "linear-gradient(to top, rgba(5,5,6,0.95) 0%, rgba(5,5,6,0.4) 50%, transparent 100%)", zIndex: 4 }} />
-      <div className="absolute top-0 left-0 right-0 h-20"  style={{ background: "linear-gradient(to bottom, rgba(5,5,6,0.75) 0%, transparent 100%)", zIndex: 4 }} />
-      <div className="absolute font-mono select-none" style={{ bottom: 100, left: 48, fontSize: 10, lineHeight: 1.8, color: "rgba(200,169,126,0.12)", letterSpacing: "0.04em", zIndex: 1, whiteSpace: "pre" }}>
+      {/* Gentle vignette — just enough, not a blackout */}
+      <div className="absolute inset-0" style={{
+        background: "radial-gradient(ellipse at center, transparent 55%, rgba(8,8,16,0.45) 100%)",
+        zIndex: 3,
+      }} />
+
+      {/* Very subtle edge fade top/bottom for taskbar/dock readability */}
+      <div className="absolute bottom-0 left-0 right-0 h-32" style={{
+        background: "linear-gradient(to top, rgba(10,8,16,0.60) 0%, transparent 100%)",
+        zIndex: 4,
+      }} />
+      <div className="absolute top-0 left-0 right-0 h-16" style={{
+        background: "linear-gradient(to bottom, rgba(10,8,16,0.50) 0%, transparent 100%)",
+        zIndex: 4,
+      }} />
+
+      {/* Boot log watermark */}
+      <div className="absolute font-mono select-none" style={{
+        bottom: 108, left: 48, fontSize: 10, lineHeight: 1.85,
+        color: "rgba(200,169,126,0.16)", letterSpacing: "0.04em", zIndex: 5, whiteSpace: "pre",
+      }}>
         {`[ OK ] kernel strontium/6.1.0\n[ OK ] mounting /dev/nvme0n1p2\n[ OK ] starting systemd v252\n[ OK ] network interface eth0\n[ OK ] postgresql 16 :5432\n[ OK ] redis 7.2 :6379\n[ OK ] axira ingestion daemon\n[ OK ] all systems operational`}
       </div>
-      <div className="absolute font-mono select-none" style={{ bottom: 100, right: 32, fontSize: 9, letterSpacing: "0.22em", color: "rgba(200,169,126,0.14)", zIndex: 5 }}>
+      <div className="absolute font-mono select-none" style={{
+        bottom: 108, right: 32, fontSize: 9,
+        letterSpacing: "0.22em", color: "rgba(200,169,126,0.18)", zIndex: 5,
+      }}>
         STRONTIUM.OS / 2026
       </div>
     </div>

@@ -145,8 +145,8 @@ export default function Window({ win, children }: Props) {
         borderRadius: isMax ? 0 : 14,
         zIndex: Math.min(win.zIndex, 44),
         border: isFocused
-          ? "1px solid rgba(200,169,126,0.18)"
-          : "1px solid rgba(255,255,255,0.05)",
+          ? "1px solid rgba(200,169,126,0.32)"
+          : "1px solid rgba(255,255,255,0.09)",
       }}
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
