@@ -123,6 +123,71 @@ function setupPty(win) {
   ipcMain.on("pty:destroy", ()                     => { try { ptyProcess?.kill(); } catch {} ptyProcess = null; });
 }
 
+// ── PTY Manager (multi-session, Module 3) ────────────────────────────────────
+
+const MAX_PTY_SESSIONS = 6;
+const PTY_BUFFER_LINES = 5_000;
+
+function setupPtyManager(win) {
+  let nodePty;
+  try { nodePty = require("node-pty"); }
+  catch (e) { console.warn("node-pty (manager) unavailable:", e.message); return; }
+
+  const sessions = new Map(); // id → { id, pty, buffer[], cols, rows, attached, lastUsed, createdAt }
+  const MGSHELL = process.env.SHELL ?? (isWin ? "powershell.exe" : "/bin/zsh");
+
+  function evictIfNeeded() {
+    const detached = Array.from(sessions.values())
+      .filter(s => !s.attached)
+      .sort((a, b) => a.lastUsed - b.lastUsed);
+    while (sessions.size >= MAX_PTY_SESSIONS && detached.length > 0) {
+      const victim = detached.shift();
+      try { victim.pty.kill(); } catch {}
+      sessions.delete(victim.id);
+    }
+  }
+
+  ipcMain.handle("pty:mgr:create", (_, cols = 80, rows = 24) => {
+    evictIfNeeded();
+    const id = `pty-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    try {
+      const pty = nodePty.spawn(MGSHELL, [], {
+        name: "xterm-256color", cols, rows,
+        cwd: process.env.HOME ?? process.cwd(),
+        env: { ...process.env, TERM: "xterm-256color", COLORTERM: "truecolor" },
+      });
+      const session = { id, pty, buffer: [], cols, rows, attached: true, createdAt: Date.now(), lastUsed: Date.now() };
+      pty.onData((data) => {
+        const lines = data.split("\n");
+        session.buffer.push(...lines);
+        if (session.buffer.length > PTY_BUFFER_LINES)
+          session.buffer.splice(0, session.buffer.length - PTY_BUFFER_LINES);
+        if (!win.isDestroyed()) win.webContents.send("pty:mgr:data", { id, data });
+      });
+      pty.onExit(({ exitCode }) => {
+        if (!win.isDestroyed()) win.webContents.send("pty:mgr:exit", { id, code: exitCode });
+        sessions.delete(id);
+      });
+      sessions.set(id, session);
+      return { ok: true, id };
+    } catch (e) { return { ok: false, error: e.message }; }
+  });
+
+  ipcMain.handle("pty:mgr:attach", (_, id) => {
+    const s = sessions.get(id);
+    if (!s) return null;
+    s.attached = true;
+    s.lastUsed = Date.now();
+    return { buffer: s.buffer.join(""), cols: s.cols, rows: s.rows };
+  });
+
+  ipcMain.on("pty:mgr:detach",  (_, id)              => { const s = sessions.get(id); if (s) s.attached = false; });
+  ipcMain.on("pty:mgr:write",   (_, { id, data })     => { const s = sessions.get(id); if (s) { s.lastUsed = Date.now(); s.pty.write(data); } });
+  ipcMain.on("pty:mgr:resize",  (_, { id, cols, rows }) => { const s = sessions.get(id); if (s) { try { s.pty.resize(cols, rows); s.cols = cols; s.rows = rows; } catch {} } });
+  ipcMain.handle("pty:mgr:destroy", (_, id) => { const s = sessions.get(id); if (s) { try { s.pty.kill(); } catch {} sessions.delete(id); } return { ok: true }; });
+  ipcMain.handle("pty:mgr:list", () => Array.from(sessions.values()).map(({ id, cols, rows, attached, createdAt }) => ({ id, cols, rows, attached, createdAt })));
+}
+
 // ── System info ───────────────────────────────────────────────────────────────
 
 let sysInfoTimer = null;
@@ -245,6 +310,36 @@ ipcMain.handle("fs:openFile", async (_, filePath) => {
   shell.openPath(filePath);
 });
 
+ipcMain.handle("fs:readFile", async (_, filePath) => {
+  try {
+    const data = fs.readFileSync(filePath, "utf8");
+    return { ok: true, data };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle("fs:writeFile", async (_, filePath, data) => {
+  try {
+    fs.writeFileSync(filePath, data, "utf8");
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle("fs:delete", async (_, filePath) => {
+  try {
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) fs.rmdirSync(filePath);
+    else fs.unlinkSync(filePath);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle("fs:move", async (_, src, dest) => {
+  try {
+    fs.renameSync(src, dest);
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
 // ── Clipboard ───────────────────────────────────────────────────────────────
 
 ipcMain.handle("clipboard:read", () => {
@@ -293,6 +388,173 @@ ipcMain.handle("audio:setVolume", (_, level) => {
   } catch { /* ignore */ }
 });
 
+// ── Jupyter integration (Module 5) ────────────────────────────────────────────
+// JupyterManager is TypeScript; we require the compiled output in production.
+// In dev we use ts-node/esm or rely on the TypeScript build. For JS compatibility
+// we duplicate the essential logic inline here.
+
+let _jupyterProc  = null;
+let _jupyterState = { status: "idle", url: null, token: null, port: 8888 };
+const JUPYTER_PORT = 8888;
+
+function notifyJupyterState(win) {
+  if (win && !win.isDestroyed()) win.webContents.send("jupyter:state", _jupyterState);
+}
+
+function setJupyterState(patch, win) {
+  _jupyterState = { ..._jupyterState, ...patch };
+  notifyJupyterState(win);
+}
+
+function findJupyter() {
+  const { execSync } = require("child_process");
+  const candidates = [
+    "jupyter-lab", "jupyter",
+    require("path").join(process.env.HOME ?? "", ".local/bin/jupyter-lab"),
+    "/opt/homebrew/bin/jupyter-lab",
+    "/usr/local/bin/jupyter-lab",
+    require("path").join(process.env.HOME ?? "", "anaconda3/bin/jupyter-lab"),
+    require("path").join(process.env.HOME ?? "", "miniconda3/bin/jupyter-lab"),
+  ];
+  for (const c of candidates) {
+    try { execSync(`which ${c} 2>/dev/null || test -f ${c}`, { timeout: 500 }); return c; }
+    catch {}
+  }
+  return null;
+}
+
+function setupJupyter(win) {
+  const { spawn } = require("child_process");
+  const READY_TIMEOUT = 30_000;
+
+  ipcMain.handle("jupyter:start", () => {
+    if (_jupyterState.status === "starting" || _jupyterState.status === "ready") {
+      return _jupyterState;
+    }
+    const exe = findJupyter();
+    if (!exe) {
+      setJupyterState({ status: "error", error: "jupyter-lab not found — run: pip install jupyterlab" }, win);
+      return _jupyterState;
+    }
+
+    setJupyterState({ status: "starting", url: null, token: null, error: undefined }, win);
+
+    const proc = spawn(exe, ["lab", `--port=${JUPYTER_PORT}`, "--no-browser", "--ip=127.0.0.1", "--NotebookApp.token="], {
+      env: { ...process.env, JUPYTER_ALLOW_INSECURE_WRITES: "1" },
+      stdio: ["ignore", "pipe", "pipe"],
+    });
+
+    _jupyterProc = proc;
+    let readyFired = false;
+
+    const readyTimer = setTimeout(() => {
+      if (_jupyterState.status === "starting") {
+        setJupyterState({ status: "error", error: "Timed out waiting for Jupyter" }, win);
+      }
+    }, READY_TIMEOUT);
+
+    const parse = (buf) => {
+      const text = buf.toString();
+      const m = text.match(/https?:\/\/(?:localhost|127\.0\.0\.1):\d+\/[^\s]+/);
+      if (m && !readyFired) {
+        readyFired = true;
+        clearTimeout(readyTimer);
+        const url   = m[0].replace("127.0.0.1", "localhost");
+        let token = null;
+        try { token = new URL(url).searchParams.get("token"); } catch {}
+        setJupyterState({ status: "ready", url, token }, win);
+      }
+    };
+
+    proc.stdout?.on("data", parse);
+    proc.stderr?.on("data", parse);
+    proc.on("exit", (code) => {
+      clearTimeout(readyTimer);
+      setJupyterState({ status: "stopped", url: null, token: null, error: `Exited ${code}` }, win);
+      _jupyterProc = null;
+    });
+    proc.on("error", (e) => {
+      clearTimeout(readyTimer);
+      setJupyterState({ status: "error", url: null, token: null, error: e.message }, win);
+      _jupyterProc = null;
+    });
+
+    return _jupyterState;
+  });
+
+  ipcMain.handle("jupyter:stop", () => {
+    if (_jupyterProc) { try { _jupyterProc.kill("SIGTERM"); } catch {} _jupyterProc = null; }
+    setJupyterState({ status: "stopped", url: null, token: null }, win);
+    return { ok: true };
+  });
+
+  ipcMain.handle("jupyter:state", () => _jupyterState);
+}
+
+// ── Power actions (Module 1) ──────────────────────────────────────────────────
+
+ipcMain.handle("power:action", async (_, action) => {
+  const { execSync } = require("child_process");
+  try {
+    switch (action) {
+      case "shutdown":
+        setTimeout(() => {
+          if (isMac) { try { execSync("osascript -e 'tell app \"System Events\" to shut down'"); } catch {} }
+          app.quit();
+        }, 400);
+        break;
+      case "restart":
+        app.relaunch({ args: process.argv.slice(1) });
+        app.exit(0);
+        break;
+      case "sleep":
+        if (isMac) { try { execSync("pmset sleepnow"); } catch {} }
+        else if (isLinux) { try { execSync("systemctl suspend"); } catch {} }
+        break;
+      case "logout":
+        app.quit();
+        break;
+      default:
+        return { ok: false, error: `Unknown action: ${action}` };
+    }
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+// ── Settings bridge handlers (Module 2) ───────────────────────────────────────
+
+ipcMain.handle("settings:setBrightness", (_, level) => {
+  const { execSync } = require("child_process");
+  const safe = Math.max(0, Math.min(100, parseInt(level, 10)));
+  if (isNaN(safe)) return { ok: false, error: "Invalid brightness level" };
+  try {
+    if (isMac) {
+      // Requires Accessibility permission; gracefully degrades
+      const normalized = (safe / 100).toFixed(2);
+      execSync(`osascript -e "tell application \\"System Events\\" to set brightness of front display to ${normalized}"`, { timeout: 1000 });
+    } else if (isLinux) {
+      execSync(`brightnessctl set ${safe}% 2>/dev/null || xrandr --output HDMI-1 --brightness ${(safe / 100).toFixed(2)} 2>/dev/null || true`);
+    }
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
+ipcMain.handle("settings:getBrightness", () => ({ ok: true, value: 80 }));
+
+ipcMain.handle("settings:setNetworkProxy", async (_, config) => {
+  try {
+    if (config && config.host) {
+      const port = parseInt(config.port, 10) || 8080;
+      await session.defaultSession.setProxy({ proxyRules: `${config.host}:${port}` });
+    } else {
+      await session.defaultSession.setProxy({ proxyRules: "direct://" });
+    }
+    return { ok: true };
+  } catch (e) { return { ok: false, error: e.message }; }
+});
+
 // ── Window ────────────────────────────────────────────────────────────────────
 
 function createWindow() {
@@ -321,7 +583,9 @@ function createWindow() {
 
   Menu.setApplicationMenu(null);
   setupPty(win);
+  setupPtyManager(win);
   setupSysInfo(win);
+  setupJupyter(win);
 
   // Screenshot capture (needs access to `win`)
   ipcMain.handle("screenshot:capture", async () => {

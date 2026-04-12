@@ -1,34 +1,62 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { RefreshCw, ExternalLink, AlertTriangle, BookOpen } from "lucide-react";
+import { RefreshCw, ExternalLink, AlertTriangle, BookOpen, Play, Square } from "lucide-react";
+import { useJupyter } from "@/hooks/useJupyter";
 
-const JUPYTER_URL = "http://localhost:8888";
-const JUPYTER_TOKEN = "brianOS";
-const EMBED_URL = `${JUPYTER_URL}/lab?token=${JUPYTER_TOKEN}`;
+// Fallback: probe a manually-started Jupyter if Electron API is unavailable
+const FALLBACK_URL   = "http://localhost:8888";
+const FALLBACK_TOKEN = "brianOS";
 
 type Status = "checking" | "online" | "offline";
 
 export default function NotebookApp() {
-  const [status, setStatus] = useState<Status>("checking");
-  const [loaded, setLoaded] = useState(false);
+  const { state: jState, start, stop } = useJupyter();
+  const isElectron = typeof window !== "undefined" && !!window.electronAPI;
+
+  const [status, setStatus]   = useState<Status>("checking");
+  const [loaded, setLoaded]   = useState(false);
+  const [starting, setStarting] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
+  // Derive embed URL from Jupyter manager state or fallback
+  const embedUrl = isElectron && jState.url
+    ? jState.url
+    : `${FALLBACK_URL}/lab?token=${FALLBACK_TOKEN}`;
+
+  // Sync status with jState when in Electron
+  useEffect(() => {
+    if (!isElectron) return;
+    if (jState.status === "ready")    { setStatus("online");  setLoaded(false); }
+    if (jState.status === "starting") setStatus("checking");
+    if (jState.status === "stopped" || jState.status === "error" || jState.status === "idle")
+      setStatus("offline");
+  }, [jState.status, isElectron]);
+
   const checkStatus = async () => {
+    if (isElectron) { start(); setStarting(true); setTimeout(() => setStarting(false), 5000); return; }
     setStatus("checking");
     setLoaded(false);
     try {
-      const res = await fetch(`${JUPYTER_URL}/api`, {
-        headers: { Authorization: `token ${JUPYTER_TOKEN}` },
+      const res = await fetch(`${FALLBACK_URL}/api`, {
+        headers: { Authorization: `token ${FALLBACK_TOKEN}` },
         signal: AbortSignal.timeout(3000),
       });
       setStatus(res.ok ? "online" : "offline");
-    } catch {
-      setStatus("offline");
-    }
+    } catch { setStatus("offline"); }
   };
 
-  useEffect(() => { checkStatus(); }, []);
+  useEffect(() => {
+    if (isElectron) {
+      // If idle, don't auto-start — let user click button
+      if (jState.status === "ready") { setStatus("online"); return; }
+      if (jState.status !== "idle") setStatus("checking");
+      else setStatus("offline");
+    } else {
+      checkStatus();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="h-full flex flex-col" style={{ background: "#0A0A0C" }}>
@@ -46,6 +74,17 @@ export default function NotebookApp() {
         </div>
 
         <div className="flex items-center gap-2">
+          {isElectron && status === "online" && (
+            <motion.button
+              onClick={stop}
+              whileTap={{ scale: 0.92 }}
+              className="p-1.5 rounded-lg"
+              style={{ background: "rgba(255,95,87,0.08)", color: "#FF5F57" }}
+              title="Stop Jupyter server"
+            >
+              <Square size={12} />
+            </motion.button>
+          )}
           <motion.button
             onClick={checkStatus}
             whileTap={{ scale: 0.92 }}
@@ -55,20 +94,22 @@ export default function NotebookApp() {
           >
             <RefreshCw size={12} className={status === "checking" ? "animate-spin" : ""} />
           </motion.button>
-          <a
-            href={EMBED_URL}
-            target="_blank"
-            rel="noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium"
-            style={{
-              background: "rgba(200,169,126,0.08)",
-              border: "1px solid rgba(200,169,126,0.15)",
-              color: "#C8A97E",
-            }}
-          >
-            <ExternalLink size={11} />
-            Open Tab
-          </a>
+          {status === "online" && (
+            <a
+              href={embedUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[11px] font-medium"
+              style={{
+                background: "rgba(200,169,126,0.08)",
+                border: "1px solid rgba(200,169,126,0.15)",
+                color: "#C8A97E",
+              }}
+            >
+              <ExternalLink size={11} />
+              Open Tab
+            </a>
+          )}
         </div>
       </div>
 
@@ -109,45 +150,59 @@ export default function NotebookApp() {
                   JupyterLab is not running
                 </div>
                 <div className="text-[12px]" style={{ color: "#4A4A56" }}>
-                  Start it from your terminal, then refresh
+                  {isElectron ? "Launch the server directly from here" : "Start it from your terminal, then refresh"}
                 </div>
+                {jState.error && (
+                  <div className="text-[11px] font-mono mt-1" style={{ color: "#FF5F57" }}>{jState.error}</div>
+                )}
               </div>
 
-              {/* Launch instruction */}
-              <div
-                className="w-full max-w-sm rounded-xl p-4 font-mono text-[11px] space-y-1"
-                style={{ background: "#060607", border: "1px solid #161618" }}
-              >
-                <div style={{ color: "#3A3A42" }}># from brian-os project root</div>
-                <div>
-                  <span style={{ color: "#7A6348" }}>$ </span>
-                  <span style={{ color: "#C8A97E" }}>./start-jupyter.sh</span>
-                </div>
-                <div style={{ color: "#3A3A42" }}># or directly:</div>
-                <div>
-                  <span style={{ color: "#7A6348" }}>$ </span>
-                  <span style={{ color: "#8A8A7A" }}>jupyter lab --no-browser \</span>
-                </div>
-                <div>
-                  <span style={{ color: "#3A3A42" }}>    --ServerApp.token=</span>
-                  <span style={{ color: "#C8A97E" }}>&apos;brianOS&apos;</span>
-                </div>
-              </div>
-
-              <motion.button
-                onClick={checkStatus}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.97 }}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[12px] font-semibold"
-                style={{
-                  background: "rgba(200,169,126,0.08)",
-                  border: "1px solid rgba(200,169,126,0.2)",
-                  color: "#C8A97E",
-                }}
-              >
-                <RefreshCw size={13} />
-                Check Again
-              </motion.button>
+              {isElectron ? (
+                <motion.button
+                  onClick={() => { start(); setStarting(true); }}
+                  disabled={starting || jState.status === "starting"}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[12px] font-semibold"
+                  style={{
+                    background: "rgba(40,200,64,0.08)",
+                    border: "1px solid rgba(40,200,64,0.2)",
+                    color: "#28C840",
+                    opacity: (starting || jState.status === "starting") ? 0.6 : 1,
+                  }}
+                >
+                  <Play size={13} />
+                  {jState.status === "starting" ? "Starting…" : "Launch Jupyter"}
+                </motion.button>
+              ) : (
+                <>
+                  {/* Manual launch instruction */}
+                  <div
+                    className="w-full max-w-sm rounded-xl p-4 font-mono text-[11px] space-y-1"
+                    style={{ background: "#060607", border: "1px solid #161618" }}
+                  >
+                    <div style={{ color: "#3A3A42" }}># from brian-os project root</div>
+                    <div>
+                      <span style={{ color: "#7A6348" }}>$ </span>
+                      <span style={{ color: "#C8A97E" }}>jupyter lab --no-browser</span>
+                    </div>
+                  </div>
+                  <motion.button
+                    onClick={checkStatus}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.97 }}
+                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-[12px] font-semibold"
+                    style={{
+                      background: "rgba(200,169,126,0.08)",
+                      border: "1px solid rgba(200,169,126,0.2)",
+                      color: "#C8A97E",
+                    }}
+                  >
+                    <RefreshCw size={13} />
+                    Check Again
+                  </motion.button>
+                </>
+              )}
             </motion.div>
           )}
 
@@ -171,7 +226,7 @@ export default function NotebookApp() {
               )}
               <iframe
                 ref={iframeRef}
-                src={EMBED_URL}
+                src={embedUrl}
                 className="w-full h-full border-0"
                 style={{ opacity: loaded ? 1 : 0, transition: "opacity 0.3s" }}
                 onLoad={() => setLoaded(true)}

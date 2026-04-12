@@ -53,4 +53,42 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   // ── Screenshot ───────────────────────────────────────────────────
   captureScreenshot: () => ipcRenderer.invoke("screenshot:capture"),
+
+  // ── Power (Module 1) ─────────────────────────────────────────────
+  powerAction: (action) => ipcRenderer.invoke("power:action", action),
+
+  // ── Settings bridge (Module 2) ───────────────────────────────────
+  setBrightness:   (level)  => ipcRenderer.invoke("settings:setBrightness", level),
+  getBrightness:   ()       => ipcRenderer.invoke("settings:getBrightness"),
+  setNetworkProxy: (config) => ipcRenderer.invoke("settings:setNetworkProxy", config),
+
+  // ── PTY Manager / multi-tab (Module 3) ──────────────────────────
+  ptyMgrCreate:  (cols, rows)     => ipcRenderer.invoke("pty:mgr:create", cols, rows),
+  ptyMgrAttach:  (id)             => ipcRenderer.invoke("pty:mgr:attach", id),
+  ptyMgrDetach:  (id)             => ipcRenderer.send("pty:mgr:detach", id),
+  ptyMgrWrite:   (id, data)       => ipcRenderer.send("pty:mgr:write", { id, data }),
+  ptyMgrResize:  (id, cols, rows) => ipcRenderer.send("pty:mgr:resize", { id, cols, rows }),
+  ptyMgrDestroy: (id)             => ipcRenderer.invoke("pty:mgr:destroy", id),
+  ptyMgrList:    ()               => ipcRenderer.invoke("pty:mgr:list"),
+
+  onPtyMgrData: (cb) => {
+    const h = (_, payload) => cb(payload);
+    ipcRenderer.on("pty:mgr:data", h);
+    return () => ipcRenderer.removeListener("pty:mgr:data", h);
+  },
+  onPtyMgrExit: (cb) => {
+    const h = (_, payload) => cb(payload);
+    ipcRenderer.on("pty:mgr:exit", h);
+    return () => ipcRenderer.removeListener("pty:mgr:exit", h);
+  },
+
+  // ── Jupyter (Module 5) ───────────────────────────────────────────
+  jupyterStart: ()  => ipcRenderer.invoke("jupyter:start"),
+  jupyterStop:  ()  => ipcRenderer.invoke("jupyter:stop"),
+  jupyterState: ()  => ipcRenderer.invoke("jupyter:state"),
+  onJupyterState: (cb) => {
+    const h = (_, state) => cb(state);
+    ipcRenderer.on("jupyter:state", h);
+    return () => ipcRenderer.removeListener("jupyter:state", h);
+  },
 });

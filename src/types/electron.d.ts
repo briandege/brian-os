@@ -34,8 +34,37 @@ declare global {
       setVolume:  (level: number) => Promise<void>;
       // Screenshot
       captureScreenshot: () => Promise<string | null>;
+      // Power (Module 1)
+      powerAction: (action: "shutdown" | "restart" | "sleep" | "logout") => Promise<{ ok: boolean; error?: string }>;
+      // Settings bridge (Module 2)
+      setBrightness:   (level: number)  => Promise<{ ok: boolean; error?: string }>;
+      getBrightness:   ()               => Promise<{ ok: boolean; value: number }>;
+      setNetworkProxy: (config: { host: string; port: number } | null) => Promise<{ ok: boolean; error?: string }>;
+      // PTY Manager / multi-tab (Module 3)
+      ptyMgrCreate:  (cols: number, rows: number) => Promise<{ ok: boolean; id?: string; error?: string }>;
+      ptyMgrAttach:  (id: string) => Promise<{ buffer: string; cols: number; rows: number } | null>;
+      ptyMgrDetach:  (id: string) => void;
+      ptyMgrWrite:   (id: string, data: string) => void;
+      ptyMgrResize:  (id: string, cols: number, rows: number) => void;
+      ptyMgrDestroy: (id: string) => Promise<{ ok: boolean }>;
+      ptyMgrList:    () => Promise<Array<{ id: string; cols: number; rows: number; attached: boolean; createdAt: number }>>;
+      onPtyMgrData:  (cb: (payload: { id: string; data: string }) => void) => () => void;
+      onPtyMgrExit:  (cb: (payload: { id: string; code: number }) => void) => () => void;
+      // Jupyter (Module 5)
+      jupyterStart:    () => Promise<JupyterState>;
+      jupyterStop:     () => Promise<{ ok: boolean }>;
+      jupyterState:    () => Promise<JupyterState>;
+      onJupyterState:  (cb: (state: JupyterState) => void) => () => void;
     };
   }
+}
+
+export interface JupyterState {
+  status:  "idle" | "starting" | "ready" | "stopped" | "error";
+  url:     string | null;
+  token:   string | null;
+  port:    number;
+  error?:  string;
 }
 
 export {};

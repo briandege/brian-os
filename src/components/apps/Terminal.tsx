@@ -1,9 +1,12 @@
 "use client";
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, X } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import { checkHealth, fetchNews, triggerIngest, AXIRA_BASE } from "@/lib/axiraClient";
 import { useSettingsStore, TERMINAL_THEMES } from "@/lib/settingsStore";
+import { useTerminalStore, type TerminalTab } from "@/lib/terminalStore";
 import type { AppId } from "@/types";
 
 // Load real xterm PTY terminal (Electron-only, no SSR)
@@ -112,6 +115,105 @@ const INITIAL: Line[] = [
   { type: "dim",     text: "strontium.os terminal v2.0  —  type 'help' for commands" },
   { type: "blank",   text: "" },
 ];
+
+// ── Multi-tab PTY terminal ────────────────────────────────────────────────────
+
+function MultiTabTerminal({ onPtyFail }: { onPtyFail: () => void }) {
+  const { tabs, activeId, addTab, removeTab, setActiveTab, updateTab } = useTerminalStore();
+  const terminalTheme = useSettingsStore((s) => s.terminalTheme);
+  const theme         = TERMINAL_THEMES[terminalTheme];
+
+  const openNewTab = useCallback(() => {
+    const tab: TerminalTab = {
+      id:        `tab-${Date.now()}`,
+      title:     `Shell ${tabs.length + 1}`,
+      status:    "connecting",
+      createdAt: Date.now(),
+    };
+    addTab(tab);
+  }, [tabs.length, addTab]);
+
+  // Open first tab on mount
+  useEffect(() => {
+    if (tabs.length === 0) openNewTab();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const closeTab = useCallback((id: string) => {
+    // Destroy the PTY session — RealTerminal's destroyOnUnmount handles this
+    // but we also need to remove from the tab store
+    removeTab(id);
+  }, [removeTab]);
+
+  return (
+    <div className="h-full flex flex-col" style={{ background: theme.bg }}>
+      {/* Tab bar */}
+      <div
+        className="flex items-center gap-0 shrink-0 overflow-x-auto"
+        style={{ borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(0,0,0,0.3)", minHeight: 34 }}
+      >
+        <AnimatePresence initial={false}>
+          {tabs.map((tab) => (
+            <motion.button
+              key={tab.id}
+              initial={{ opacity: 0, scaleX: 0.7 }}
+              animate={{ opacity: 1, scaleX: 1 }}
+              exit={{ opacity: 0, scaleX: 0.7 }}
+              transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              onClick={() => setActiveTab(tab.id)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-mono shrink-0 relative"
+              style={{
+                color:      tab.id === activeId ? theme.fg : theme.fg + "66",
+                background: tab.id === activeId ? "rgba(255,255,255,0.06)" : "transparent",
+                borderRight: "1px solid rgba(255,255,255,0.04)",
+                maxWidth: 140,
+              }}
+            >
+              <span className="truncate">{tab.title}</span>
+              {tab.status === "connecting" && (
+                <span className="inline-block w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: theme.yellow }} />
+              )}
+              <span
+                role="button"
+                onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }}
+                className="ml-0.5 rounded opacity-40 hover:opacity-100 transition-opacity"
+                style={{ color: theme.red }}
+              >
+                <X size={10} />
+              </span>
+            </motion.button>
+          ))}
+        </AnimatePresence>
+        <button
+          onClick={openNewTab}
+          className="px-2 py-1.5 opacity-40 hover:opacity-80 transition-opacity shrink-0"
+          style={{ color: theme.fg }}
+        >
+          <Plus size={13} />
+        </button>
+      </div>
+
+      {/* Terminal panes — keep all mounted via visibility, only show active */}
+      <div className="flex-1 relative overflow-hidden">
+        {tabs.map((tab, idx) => (
+          <div
+            key={tab.id}
+            className="absolute inset-0"
+            style={{ visibility: tab.id === activeId ? "visible" : "hidden" }}
+          >
+            <RealTerminal
+              onReady={() => updateTab(tab.id, { title: `Shell ${idx + 1}`, status: "ready" })}
+              onExit={() => updateTab(tab.id, { status: "exited", title: `[exited ${idx + 1}]` })}
+              onPtyFail={onPtyFail}
+              destroyOnUnmount={true}
+              active={tab.id === activeId}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function TerminalApp() {
   const { open } = useWindowStore();
@@ -337,7 +439,7 @@ export default function TerminalApp() {
     }
   };
 
-  if (isElectron && !ptyFailed) return <RealTerminal onPtyFail={() => setPtyFailed(true)} />;
+  if (isElectron && !ptyFailed) return <MultiTabTerminal onPtyFail={() => setPtyFailed(true)} />;
 
   return (
     <div
