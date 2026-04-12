@@ -132,7 +132,78 @@ function SparkLine({ value, max, color, label }: { value: number; max: number; c
 }
 
 // ── Main shell ───────────────────────────────────────────────────────────────
+// ── Strontium-only gate ───────────────────────────────────────────────────────
+function StrontiumRequired() {
+  return (
+    <div
+      className="h-full flex flex-col items-center justify-center gap-6"
+      style={{ background: "#060607" }}
+    >
+      {/* Emblem */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.88 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ type: "spring", stiffness: 280, damping: 24 }}
+        className="flex flex-col items-center gap-5"
+      >
+        <div
+          className="w-16 h-16 rounded-[20px] flex items-center justify-center relative"
+          style={{
+            background: "linear-gradient(145deg, rgba(212,170,130,0.10) 0%, rgba(212,170,130,0.04) 100%)",
+            border: "1px solid rgba(212,170,130,0.20)",
+            boxShadow: "0 0 40px rgba(212,170,130,0.08)",
+          }}
+        >
+          {/* Lock icon via SVG */}
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#D4AA82" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          {/* Glow ring */}
+          <motion.div
+            animate={{ opacity: [0.4, 0.8, 0.4] }}
+            transition={{ duration: 2.8, repeat: Infinity }}
+            className="absolute inset-0 rounded-[20px]"
+            style={{ boxShadow: "0 0 24px rgba(212,170,130,0.18)", pointerEvents: "none" }}
+          />
+        </div>
+
+        <div className="text-center space-y-2">
+          <div
+            className="text-[15px] font-semibold tracking-wide"
+            style={{ color: "#F4F1EA" }}
+          >
+            strontium.os required
+          </div>
+          <div
+            className="text-[12px] font-mono max-w-[260px] leading-relaxed"
+            style={{ color: "#3E3E58" }}
+          >
+            Simulations run exclusively inside the strontium.os environment. Open this app from the desktop.
+          </div>
+        </div>
+
+        {/* Platform badge */}
+        <div
+          className="flex items-center gap-2 px-4 py-2 rounded-xl"
+          style={{
+            background: "rgba(212,170,130,0.06)",
+            border: "1px solid rgba(212,170,130,0.14)",
+          }}
+        >
+          <div className="w-1.5 h-1.5 rounded-full" style={{ background: "#D4AA82" }} />
+          <span className="text-[10px] font-mono tracking-[0.14em] uppercase" style={{ color: "#D4AA82" }}>
+            strontium.os · simulation engine
+          </span>
+        </div>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function SimulationApp() {
+  const isStrontium = typeof window !== "undefined" && !!window.electronAPI;
+
   const [mode, setMode]       = useState<Mode>("particles");
   const [running, setRunning] = useState(true);
   const [fps, setFps]         = useState(0);
@@ -140,6 +211,8 @@ export default function SimulationApp() {
   const [resetKey, setResetKey] = useState(0);
 
   const handleTel = useCallback((t: TelemetryFrame) => setTel(t), []);
+
+  if (!isStrontium) return <StrontiumRequired />;
 
   return (
     <div className="h-full flex flex-col" style={{ background: "#060607" }}>
