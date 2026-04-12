@@ -78,10 +78,10 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 4, scale: 0.92, transition: { duration: 0.1, ease: "easeIn" } }}
             transition={{ type: "spring", stiffness: 400, damping: 28, mass: 0.5 }}
-            className="absolute bottom-[calc(100%+14px)] whitespace-nowrap text-[11px] px-2.5 py-1 rounded-lg font-medium pointer-events-none z-50"
+            className="absolute bottom-[calc(100%+14px)] whitespace-nowrap text-xs px-2.5 py-1 rounded-lg font-medium pointer-events-none z-50"
             style={{
               background: "rgba(22,22,28,0.95)",
-              border: "1px solid rgba(255,255,255,0.07)",
+              border: "1px solid rgba(255,255,255,0.09)",
               color: "#F0EDE6",
               boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
             }}
@@ -99,10 +99,10 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
         style={{ scale, y }}
         onClick={() => open(app.id)}
         whileTap={{ scale: 0.88 }}
-        className="w-12 h-12 rounded-[14px] flex items-center justify-center relative overflow-hidden"
+        className="w-12 h-12 rounded-[15px] flex items-center justify-center relative overflow-hidden"
       >
         <div
-          className="absolute inset-0 rounded-[14px]"
+          className="absolute inset-0 rounded-[15px]"
           style={{
             background: meta.bg,
             border: isOpen_ ? `1px solid ${meta.color}28` : "1px solid rgba(255,255,255,0.06)",
@@ -113,7 +113,7 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
         />
         {isOpen_ && (
           <div
-            className="absolute inset-0 rounded-[14px]"
+            className="absolute inset-0 rounded-[15px]"
             style={{ background: `radial-gradient(circle at 50% 30%, ${meta.color}18, transparent 70%)` }}
           />
         )}
@@ -123,15 +123,16 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
       </motion.button>
 
       {/* Running dot */}
-      <div className="h-[5px] flex items-center justify-center mt-1">
+      <div className="h-[6px] flex items-center justify-center mt-1">
         {(isOpen_ || isMin_) && (
           <motion.div
             layoutId={`dot-${app.id}`}
             className="rounded-full"
             style={{
-              width: isOpen_ ? 5 : 3,
-              height: isOpen_ ? 5 : 3,
+              width: isOpen_ ? 6 : 3,
+              height: isOpen_ ? 6 : 3,
               background: isOpen_ ? meta.color : "#3A3A42",
+              boxShadow: isOpen_ ? `0 0 8px ${meta.color}` : "none",
             }}
             transition={{ type: "spring", stiffness: 400, damping: 24 }}
           />
@@ -154,14 +155,14 @@ export default function Dock() {
       onMouseLeave={() => mouseX.set(Infinity)}
     >
       <div
-        className="glass-dock flex items-end gap-1.5 px-3 py-2.5 rounded-2xl relative"
+        className="glass-dock flex items-end gap-2 px-3 py-2.5 rounded-[22px] relative"
         style={{
           border: "1px solid rgba(255,255,255,0.12)",
         }}
       >
         <div
           className="absolute top-0 left-4 right-4 h-px rounded-full"
-          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)" }}
+          style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.22), transparent)" }}
         />
         {APP_REGISTRY.map((app) => (
           <DockIcon key={app.id} app={app} mouseX={mouseX} />

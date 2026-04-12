@@ -72,12 +72,12 @@ export default function Taskbar() {
           top: showBanners ? 28 : 0,
           height: 40,
           borderBottom: "1px solid rgba(255,255,255,0.10)",
-          boxShadow: "0 1px 0 rgba(0,0,0,0.5), 0 4px 24px rgba(0,0,0,0.4)",
+          boxShadow: "0 1px 0 rgba(0,0,0,0.6), 0 2px 0 rgba(0,0,0,0.2), 0 4px 32px rgba(0,0,0,0.45)",
         }}
       >
         {/* Bottom accent line */}
         <div className="absolute bottom-0 inset-x-0 h-px" style={{
-          background: "linear-gradient(90deg, transparent 0%, rgba(200,169,126,0.12) 20%, rgba(200,169,126,0.12) 80%, transparent 100%)",
+          background: "linear-gradient(90deg, transparent 0%, rgba(212,170,130,0.16) 20%, rgba(212,170,130,0.16) 80%, transparent 100%)",
         }} />
 
         <div className="flex items-center h-full px-4">
@@ -87,15 +87,15 @@ export default function Taskbar() {
             <div className="relative flex items-center justify-center">
               <motion.div
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ background: "#C8A97E" }}
+                style={{ background: "#D4AA82" }}
                 animate={{ opacity: [1, 0.35, 1], scale: [1, 0.8, 1] }}
                 transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
               />
               <div className="absolute w-3 h-3 rounded-full" style={{
-                background: "radial-gradient(circle, rgba(200,169,126,0.25) 0%, transparent 70%)",
+                background: "radial-gradient(circle, rgba(212,170,130,0.25) 0%, transparent 70%)",
               }} />
             </div>
-            <span className="text-[11px] font-bold font-mono tracking-[0.2em] uppercase" style={{ color: "#C8A97E" }}>
+            <span className="font-bold font-mono tracking-[0.18em] uppercase" style={{ color: "#D4AA82", fontSize: "10.5px", textShadow: "0 0 20px rgba(212,170,130,0.4)" }}>
               strontium.os
             </span>
             {openCount > 0 && (
@@ -103,7 +103,7 @@ export default function Taskbar() {
                 initial={{ opacity: 0, scale: 0.7 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="text-[9px] font-mono px-1.5 py-0.5 rounded-full"
-                style={{ background: "rgba(200,169,126,0.1)", border: "1px solid rgba(200,169,126,0.18)", color: "rgba(200,169,126,0.6)", lineHeight: 1 }}
+                style={{ background: "rgba(212,170,130,0.1)", border: "1px solid rgba(212,170,130,0.18)", color: "rgba(212,170,130,0.6)", lineHeight: 1 }}
               >
                 {openCount}
               </motion.span>
@@ -122,8 +122,8 @@ export default function Taskbar() {
                   transition={{ duration: 0.18, ease: "easeOut" }}
                   className="flex items-center gap-2 max-w-[300px]"
                 >
-                  <div className="w-1 h-1 rounded-full shrink-0" style={{ background: "rgba(200,169,126,0.5)" }} />
-                  <span className="text-[11.5px] font-medium truncate" style={{ color: "rgba(200,169,126,0.55)" }}>
+                  <div className="w-1 h-1 rounded-full shrink-0" style={{ background: "rgba(212,170,130,0.5)" }} />
+                  <span className="text-[11.5px] font-medium truncate" style={{ color: "rgba(212,170,130,0.55)" }}>
                     {focused.title}
                   </span>
                 </motion.div>
@@ -148,17 +148,17 @@ export default function Taskbar() {
 
             {/* Status icons */}
             <div className="flex items-center gap-2">
-              <ShieldCheck size={11} style={{ color: showUptimeBadge ? "#28C840" : "#4A4A5A", opacity: 0.75 }} />
-              <Wifi size={11} style={{ color: "#4A4A5A", opacity: 0.8 }} />
-              <BatteryMedium size={12} style={{ color: "#4A4A5A", opacity: 0.7 }} />
+              <ShieldCheck size={11} style={{ color: showUptimeBadge ? "#28C840" : "#4A4A5A", opacity: 0.82 }} />
+              <Wifi size={11} style={{ color: "#4A4A5A", opacity: 0.88 }} />
+              <BatteryMedium size={12} style={{ color: "#4A4A5A", opacity: 0.78 }} />
               {uptimeSeconds > 60 && (
-                <span className="text-[8px] font-mono" style={{ color: "rgba(200,169,126,0.35)" }}>
+                <span className="text-[8px] font-mono" style={{ color: "rgba(212,170,130,0.35)" }}>
                   {formatUptime(uptimeSeconds)}
                 </span>
               )}
             </div>
 
-            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
             {/* Volume */}
             <div className="relative">
@@ -166,7 +166,7 @@ export default function Taskbar() {
                 onClick={openVol}
                 title="Volume"
                 className="flex items-center justify-center w-5 h-5 rounded-md transition-colors"
-                style={{ color: volOpen ? "#C8A97E" : volume === 0 ? "rgba(255,85,87,0.5)" : "rgba(255,255,255,0.28)" }}
+                style={{ color: volOpen ? "#D4AA82" : volume === 0 ? "rgba(255,85,87,0.5)" : "rgba(255,255,255,0.28)" }}
               >
                 {volume === 0 ? <VolumeX size={12} /> : <Volume2 size={12} />}
               </button>
@@ -185,7 +185,7 @@ export default function Taskbar() {
                       backdropFilter: "blur(20px)",
                     }}
                   >
-                    <span className="text-[10px] font-mono" style={{ color: "#C8A97E" }}>{volume}%</span>
+                    <span className="text-[10px] font-mono" style={{ color: "#D4AA82" }}>{volume}%</span>
                     <input
                       type="range"
                       min={0}
@@ -197,7 +197,7 @@ export default function Taskbar() {
                         writingMode: "vertical-lr" as React.CSSProperties["writingMode"],
                         direction: "rtl" as React.CSSProperties["direction"],
                         width: 4,
-                        accentColor: "#C8A97E",
+                        accentColor: "#D4AA82",
                       }}
                     />
                     <button
@@ -212,26 +212,26 @@ export default function Taskbar() {
               </AnimatePresence>
             </div>
 
-            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
             {/* ARIA AI */}
             <button
               onClick={() => openApp("ai")}
               title="ARIA Assistant"
               className="flex items-center justify-center w-5 h-5 rounded-md transition-colors"
-              style={{ color: "rgba(200,169,126,0.45)" }}
+              style={{ color: "rgba(212,170,130,0.45)" }}
             >
               <Bot size={12} />
             </button>
 
-            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
             {/* Control Center */}
             <button
               onClick={openCC}
               title="Control Center"
               className="flex items-center justify-center w-5 h-5 rounded-md transition-colors"
-              style={{ color: ccOpen ? "#C8A97E" : "rgba(255,255,255,0.28)" }}
+              style={{ color: ccOpen ? "#D4AA82" : "rgba(255,255,255,0.28)" }}
             >
               <SlidersHorizontal size={12} />
             </button>
@@ -240,7 +240,7 @@ export default function Taskbar() {
             <button
               onClick={openNotif}
               className="relative flex items-center justify-center w-5 h-5"
-              style={{ color: notifOpen ? "#C8A97E" : doNotDisturb ? "#FEBC2E" : "rgba(255,255,255,0.28)" }}
+              style={{ color: notifOpen ? "#D4AA82" : doNotDisturb ? "#FEBC2E" : "rgba(255,255,255,0.28)" }}
               title={doNotDisturb ? "Do Not Disturb" : "Notifications"}
             >
               <motion.div animate={unread > 0 && !doNotDisturb ? { rotate: [0, -10, 10, -6, 6, 0] } : {}} transition={{ duration: 0.4, repeat: Infinity, repeatDelay: 10 }}>
@@ -259,16 +259,16 @@ export default function Taskbar() {
               )}
             </button>
 
-            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
 
             {/* Date + Clock */}
-            <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.2)" }}>{time.date}</span>
-            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.07)" }} />
+            <span className="text-[10px] font-mono" style={{ color: "rgba(255,255,255,0.25)" }}>{time.date}</span>
+            <div className="h-3.5 w-px" style={{ background: "rgba(255,255,255,0.08)" }} />
             <div className="flex items-baseline gap-0.5">
-              <span className="text-[13px] font-semibold tabular-nums font-mono" style={{ color: "rgba(200,169,126,0.7)" }}>
+              <span className="font-semibold tabular-nums font-mono" style={{ fontSize: "12.5px", color: "rgba(212,170,130,0.8)" }}>
                 {time.h}:{time.m}
               </span>
-              <span className="text-[8.5px] font-mono" style={{ color: "rgba(200,169,126,0.3)" }}>
+              <span className="text-[8.5px] font-mono" style={{ color: "rgba(212,170,130,0.3)" }}>
                 {time.meridiem}
               </span>
             </div>

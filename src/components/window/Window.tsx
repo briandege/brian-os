@@ -67,9 +67,9 @@ function TrafficLight({
   const [hov, setHov] = useState(false);
   return (
     <motion.button
-      className="relative w-[13px] h-[13px] rounded-full flex items-center justify-center shrink-0 overflow-hidden"
+      className="relative w-[14px] h-[14px] rounded-full flex items-center justify-center shrink-0 overflow-hidden"
       style={{
-        background: dimmed ? "#2E2E38" : (hov ? hoverColor : color),
+        background: dimmed ? "#2A2A36" : (hov ? hoverColor : color),
         boxShadow: !dimmed && hov ? `0 0 8px ${color}90` : "0 1px 2px rgba(0,0,0,0.45)",
       }}
       whileHover={{ scale: 1.18 }}
@@ -82,7 +82,7 @@ function TrafficLight({
     >
       {/* gloss sheen */}
       <div className="absolute inset-0 rounded-full pointer-events-none" style={{
-        background: "linear-gradient(160deg, rgba(255,255,255,0.32) 0%, transparent 55%)",
+        background: "linear-gradient(160deg, rgba(255,255,255,0.35) 0%, transparent 55%)",
       }} />
       <motion.span
         className="relative z-10 text-[7px] font-black leading-none select-none"
@@ -141,10 +141,10 @@ export default function Window({ win, children }: Props) {
         width:  isMax ? "100vw" : win.size.width,
         top:    isMax ? 40 : undefined,
         height: isMax ? "calc(100vh - 40px - 88px)" : win.size.height,
-        borderRadius: isMax ? 0 : 14,
+        borderRadius: isMax ? 0 : 16,
         zIndex: Math.min(win.zIndex, 44),
         border: isFocused
-          ? "1px solid rgba(200,169,126,0.32)"
+          ? "1px solid rgba(212,170,130,0.32)"
           : "1px solid rgba(255,255,255,0.09)",
         pointerEvents: win.isMinimized ? "none" : "auto",
         transition: "width 0.32s cubic-bezier(0.4,0,0.2,1), height 0.32s cubic-bezier(0.4,0,0.2,1), top 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s cubic-bezier(0.4,0,0.2,1)",
@@ -176,12 +176,12 @@ export default function Window({ win, children }: Props) {
       <div
         className="drag-handle relative flex items-center px-4 shrink-0 select-none overflow-hidden"
         style={{
-          height: 44,
+          height: 42,
           background: isFocused
-            ? "linear-gradient(180deg, #1E1E24 0%, #17171C 100%)"
-            : "linear-gradient(180deg, #111115 0%, #0D0D11 100%)",
+            ? "linear-gradient(180deg, rgba(28,30,42,0.98) 0%, rgba(20,21,32,0.98) 100%)"
+            : "linear-gradient(180deg, rgba(14,15,22,0.97) 0%, rgba(10,11,16,0.97) 100%)",
           borderBottom: isFocused
-            ? "1px solid rgba(200,169,126,0.10)"
+            ? "1px solid rgba(212,170,130,0.12)"
             : "1px solid rgba(255,255,255,0.04)",
         }}
         onPointerDown={(e) => { if (!isMax) dragControls.start(e); handleFocus(); }}
@@ -190,22 +190,22 @@ export default function Window({ win, children }: Props) {
         {/* Top edge highlight */}
         <div className="absolute top-0 inset-x-0 h-px pointer-events-none" style={{
           background: isFocused
-            ? "linear-gradient(90deg, transparent 4%, rgba(255,255,255,0.14) 25%, rgba(255,255,255,0.14) 75%, transparent 96%)"
-            : "linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent)",
+            ? "linear-gradient(90deg, transparent 2%, rgba(255,255,255,0.18) 20%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.18) 80%, transparent 98%)"
+            : "linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent)",
         }} />
 
         {/* Bottom separator glow when focused */}
         {isFocused && (
           <div className="absolute bottom-0 inset-x-0 h-px pointer-events-none" style={{
-            background: "linear-gradient(90deg, transparent 10%, rgba(200,169,126,0.12) 40%, rgba(200,169,126,0.12) 60%, transparent 90%)",
+            background: "linear-gradient(90deg, transparent 5%, rgba(212,170,130,0.14) 35%, rgba(212,170,130,0.14) 65%, transparent 95%)",
           }} />
         )}
 
         {/* Traffic lights */}
-        <div className="flex items-center gap-[7px] shrink-0 z-10">
+        <div className="flex items-center gap-[8px] shrink-0 z-10">
           <TrafficLight color="#FF5F57" hoverColor="#E04040" icon="✕" dimmed={!isFocused} onClick={() => close(win.instanceId)} />
           <TrafficLight color="#FEBC2E" hoverColor="#E8A800" icon="−" dimmed={!isFocused} onClick={() => minimize(win.instanceId)} />
-          <TrafficLight color={isFocused ? "#28C840" : "#3A3A46"} hoverColor="#1DB830" icon="⤢" dimmed={false} onClick={() => maximize(win.instanceId)} />
+          <TrafficLight color="#28C840" hoverColor="#1DB830" icon="⤢" dimmed={!isFocused} onClick={() => maximize(win.instanceId)} />
         </div>
 
         {/* Title — centered between traffic lights and right edge */}
@@ -213,7 +213,7 @@ export default function Window({ win, children }: Props) {
           <span
             className="text-[12px] font-semibold tracking-wide truncate"
             style={{
-              color: isFocused ? "rgba(200,169,126,0.72)" : "rgba(255,255,255,0.16)",
+              color: isFocused ? "rgba(212,170,130,0.78)" : "rgba(255,255,255,0.14)",
             }}
           >
             {win.title}

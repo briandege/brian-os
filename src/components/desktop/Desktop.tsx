@@ -375,24 +375,26 @@ function Wallpaper() {
 
       {/* Base — rich deep navy, not pure black */}
       <div className="absolute inset-0" style={{
-        background: "linear-gradient(160deg, #0E1020 0%, #0C0D18 40%, #10090E 100%)",
+        background: "linear-gradient(145deg, #070810 0%, #0A0B16 35%, #0D0810 70%, #070609 100%)",
       }} />
 
       {/* Ambient color atmosphere — the "soul" of the wallpaper */}
       <motion.div
         className="absolute inset-0"
         animate={{ opacity: [0.85, 1, 0.82, 1, 0.85] }}
-        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
         style={{
           background: [
-            /* warm gold center glow */
-            "radial-gradient(ellipse 70% 55% at 50% 52%, rgba(200,155,80,0.22) 0%, transparent 65%)",
+            /* warm gold center glow — warmer, more layered */
+            "radial-gradient(ellipse 65% 50% at 50% 55%, rgba(190,140,70,0.20) 0%, rgba(140,90,40,0.08) 50%, transparent 70%)",
             /* cool indigo top-left accent */
             "radial-gradient(ellipse 50% 40% at 15% 20%, rgba(80,100,200,0.14) 0%, transparent 60%)",
             /* deep purple bottom-right */
             "radial-gradient(ellipse 45% 35% at 85% 80%, rgba(120,60,180,0.10) 0%, transparent 55%)",
             /* subtle teal top-right */
             "radial-gradient(ellipse 35% 30% at 88% 18%, rgba(40,160,180,0.08) 0%, transparent 50%)",
+            /* bottom-center deep red-violet */
+            "radial-gradient(ellipse 40% 30% at 48% 90%, rgba(100,40,120,0.07) 0%, transparent 55%)",
           ].join(", "),
           zIndex: 1,
         }}
@@ -457,13 +459,13 @@ function Wallpaper() {
 
       {/* Gentle vignette — just enough, not a blackout */}
       <div className="absolute inset-0" style={{
-        background: "radial-gradient(ellipse at center, transparent 55%, rgba(8,8,16,0.45) 100%)",
+        background: "radial-gradient(ellipse at center, transparent 50%, rgba(8,8,16,0.52) 100%)",
         zIndex: 3,
       }} />
 
       {/* Very subtle edge fade top/bottom for taskbar/dock readability */}
-      <div className="absolute bottom-0 left-0 right-0 h-32" style={{
-        background: "linear-gradient(to top, rgba(10,8,16,0.60) 0%, transparent 100%)",
+      <div className="absolute bottom-0 left-0 right-0 h-40" style={{
+        background: "linear-gradient(to top, rgba(10,8,16,0.68) 0%, transparent 100%)",
         zIndex: 4,
       }} />
       <div className="absolute top-0 left-0 right-0 h-16" style={{
