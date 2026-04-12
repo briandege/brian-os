@@ -18,7 +18,8 @@ export default function Taskbar() {
   const [volume, setVolumeState] = useState(50);
   const unread = useNotificationStore((s) => s.notifications.filter((n) => !n.read).length);
   const doNotDisturb = useSettingsStore((s) => s.doNotDisturb);
-  const topSecretBanners = useSettingsStore((s) => s.topSecretBanners);
+  const classificationLevel = useSettingsStore((s) => s.classificationLevel);
+  const showBanners = classificationLevel !== "none";
   const uptimeSeconds = useHealthStore((s) => s.uptimeSeconds);
   const showUptimeBadge = useHealthStore((s) => s.showUptimeBadge);
   const { open: openApp } = useWindowStore();
@@ -68,7 +69,7 @@ export default function Taskbar() {
       <div
         className="glass fixed left-0 right-0 z-50 select-none"
         style={{
-          top: topSecretBanners ? 28 : 0,
+          top: showBanners ? 28 : 0,
           height: 40,
           borderBottom: "1px solid rgba(255,255,255,0.10)",
           boxShadow: "0 1px 0 rgba(0,0,0,0.5), 0 4px 24px rgba(0,0,0,0.4)",

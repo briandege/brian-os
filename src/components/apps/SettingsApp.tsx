@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Palette, Monitor, Rocket, Info, ChevronRight,
-  Check, RotateCcw, TerminalSquare, Keyboard,
+  Check, RotateCcw, TerminalSquare, Keyboard, Shield, Eye, EyeOff, Lock,
 } from "lucide-react";
 import {
   useSettingsStore, applyAccent,
-  ACCENT_PALETTE, TERMINAL_THEMES,
+  ACCENT_PALETTE, TERMINAL_THEMES, CLASSIFICATION_CONFIG,
   type AccentColor, type WallpaperStyle,
-  type TerminalTheme, type TerminalCursor, type AnimationSpeed,
+  type TerminalTheme, type TerminalCursor, type AnimationSpeed, type ClassificationLevel,
 } from "@/lib/settingsStore";
 import { APP_REGISTRY } from "@/lib/apps";
 import type { AppId } from "@/types";
@@ -17,6 +17,7 @@ import type { AppId } from "@/types";
 const SECTIONS = [
   { id: "appearance", label: "Appearance",  icon: <Palette size={14} /> },
   { id: "desktop",    label: "Desktop",     icon: <Monitor size={14} /> },
+  { id: "security",   label: "Security",    icon: <Shield size={14} /> },
   { id: "terminal",   label: "Terminal",    icon: <TerminalSquare size={14} /> },
   { id: "startup",    label: "Startup",     icon: <Rocket size={14} /> },
   { id: "keyboard",   label: "Keyboard",    icon: <Keyboard size={14} /> },
@@ -76,7 +77,8 @@ export default function SettingsApp() {
     dockMagnification, setDockMagnification,
     animationSpeed, setAnimationSpeed,
     startupApps, toggleStartupApp,
-    topSecretBanners, setTopSecretBanners,
+    classificationLevel, setClassificationLevel,
+    classificationPassword, setClassificationPassword,
   } = useSettingsStore();
 
   useEffect(() => { applyAccent(accent); }, [accent]);
@@ -161,10 +163,6 @@ export default function SettingsApp() {
               <Toggle value={dockMagnification} onChange={setDockMagnification} />
             </SettingRow>
 
-            <SettingRow label="TOP SECRET Banners" desc="Classified document-style top & bottom bars">
-              <Toggle value={topSecretBanners} onChange={setTopSecretBanners} />
-            </SettingRow>
-
             <SettingRow label="Animation Speed" desc="Window and UI animation timing">
               <div className="flex gap-2">
                 {ANIMATION_SPEEDS.map((s) => (
@@ -187,6 +185,16 @@ export default function SettingsApp() {
               <StaticChip>Glass</StaticChip>
             </SettingRow>
           </Section>
+        )}
+
+        {/* ── Security ── */}
+        {section === "security" && (
+          <SecuritySection
+            level={classificationLevel}
+            password={classificationPassword}
+            onLevelChange={setClassificationLevel}
+            onPasswordChange={setClassificationPassword}
+          />
         )}
 
         {/* ── Terminal ── */}
@@ -448,6 +456,224 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />
     </motion.button>
+  );
+}
+
+// ── Security Section ────────────────────────────────────────────────────────
+
+const LEVELS: { id: ClassificationLevel; label: string; color: string; desc: string }[] = [
+  { id: "none",        label: "None",         color: "#3A3A42", desc: "No classification banners" },
+  { id: "confidential",label: "Confidential", color: "#3A7BD5", desc: "AES-128-CBC · TLS 1.3" },
+  { id: "secret",      label: "Secret",       color: "#CC2222", desc: "AES-256-CBC · TLS 1.3" },
+  { id: "top-secret",  label: "Top Secret",   color: "#C00000", desc: "AES-256-GCM · TLS 1.3 · FIPS 140-3" },
+];
+
+function SecuritySection({
+  level, password, onLevelChange, onPasswordChange,
+}: {
+  level: ClassificationLevel;
+  password: string;
+  onLevelChange: (l: ClassificationLevel) => void;
+  onPasswordChange: (p: string) => void;
+}) {
+  const [promptTarget, setPromptTarget] = useState<ClassificationLevel | null>(null);
+  const [promptInput, setPromptInput]   = useState("");
+  const [promptError, setPromptError]   = useState("");
+  const [showPw, setShowPw]             = useState(false);
+
+  // Change-password state
+  const [cpCurrent, setCpCurrent]   = useState("");
+  const [cpNew, setCpNew]           = useState("");
+  const [cpConfirm, setCpConfirm]   = useState("");
+  const [cpMsg, setCpMsg]           = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [showCpPw, setShowCpPw]     = useState(false);
+
+  const submitPrompt = () => {
+    if (promptInput === password) {
+      onLevelChange(promptTarget!);
+      setPromptTarget(null);
+      setPromptInput("");
+      setPromptError("");
+    } else {
+      setPromptError("Incorrect password");
+      setPromptInput("");
+    }
+  };
+
+  const submitPasswordChange = () => {
+    if (cpCurrent !== password)  { setCpMsg({ type: "err", text: "Current password incorrect" }); return; }
+    if (cpNew.length < 1)        { setCpMsg({ type: "err", text: "New password cannot be empty" }); return; }
+    if (cpNew !== cpConfirm)     { setCpMsg({ type: "err", text: "Passwords do not match" }); return; }
+    onPasswordChange(cpNew);
+    setCpCurrent(""); setCpNew(""); setCpConfirm("");
+    setCpMsg({ type: "ok", text: "Password updated" });
+    setTimeout(() => setCpMsg(null), 2500);
+  };
+
+  return (
+    <>
+      {/* Classification Level */}
+      <Section title="Classification Level">
+        <p className="text-[11px] mb-3" style={{ color: "#3A3A42" }}>
+          Password required to change classification. Default: <span style={{ color: "#C8A97E" }}>admin</span>
+        </p>
+        <div className="space-y-2">
+          {LEVELS.map((l) => {
+            const active = level === l.id;
+            const cfg = l.id !== "none" ? CLASSIFICATION_CONFIG[l.id as Exclude<ClassificationLevel, "none">] : null;
+            return (
+              <motion.button
+                key={l.id}
+                onClick={() => {
+                  if (active) return;
+                  setPromptTarget(l.id);
+                  setPromptInput("");
+                  setPromptError("");
+                }}
+                className="w-full flex items-center justify-between px-4 py-3 rounded-xl text-left"
+                style={{
+                  background: active ? `${l.color}14` : "#0C0C0E",
+                  border: `1px solid ${active ? l.color + "44" : "#161618"}`,
+                }}
+                whileHover={{ scale: active ? 1 : 1.005 }}
+                whileTap={{ scale: 0.998 }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: l.color, boxShadow: active ? `0 0 8px ${l.color}80` : "none" }} />
+                  <div>
+                    <div className="text-[12px] font-semibold" style={{ color: active ? l.color : "#6A6A76" }}>{l.label}</div>
+                    <div className="text-[10px] font-mono mt-0.5" style={{ color: "#3A3A42" }}>{l.desc}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {cfg && (
+                    <span className="text-[9px] font-mono px-1.5 py-0.5 rounded" style={{ background: "#111113", border: "1px solid #1E1E22", color: "#4A4A56" }}>
+                      {cfg.markings}
+                    </span>
+                  )}
+                  {active && <Check size={13} style={{ color: l.color }} strokeWidth={2.5} />}
+                  {!active && <Lock size={11} style={{ color: "#2A2A32" }} />}
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Password Prompt */}
+        <AnimatePresence>
+          {promptTarget !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: -8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -6, scale: 0.97, transition: { duration: 0.15 } }}
+              transition={{ type: "spring", stiffness: 360, damping: 28 }}
+              className="mt-3 p-4 rounded-xl"
+              style={{ background: "#0A0A0C", border: "1px solid #1E1E26" }}
+            >
+              <div className="text-[11px] font-medium mb-2" style={{ color: "#C8C6C0" }}>
+                Enter password to switch to <span style={{ color: LEVELS.find(l => l.id === promptTarget)?.color }}>{LEVELS.find(l => l.id === promptTarget)?.label}</span>
+              </div>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <input
+                    type={showPw ? "text" : "password"}
+                    value={promptInput}
+                    onChange={(e) => { setPromptInput(e.target.value); setPromptError(""); }}
+                    onKeyDown={(e) => e.key === "Enter" && submitPrompt()}
+                    placeholder="Password"
+                    autoFocus
+                    className="os-input w-full px-3 py-2 rounded-lg text-[12px] font-mono pr-8"
+                    style={{ userSelect: "text" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPw(v => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                    style={{ color: "#3A3A42" }}
+                  >
+                    {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
+                  </button>
+                </div>
+                <motion.button
+                  onClick={submitPrompt}
+                  className="px-4 py-2 rounded-lg text-[12px] font-medium"
+                  style={{ background: "rgba(200,169,126,0.12)", border: "1px solid rgba(200,169,126,0.25)", color: "#C8A97E" }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Confirm
+                </motion.button>
+                <motion.button
+                  onClick={() => { setPromptTarget(null); setPromptError(""); }}
+                  className="px-3 py-2 rounded-lg text-[12px]"
+                  style={{ background: "#111113", border: "1px solid #1E1E22", color: "#4A4A56" }}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  Cancel
+                </motion.button>
+              </div>
+              {promptError && (
+                <div className="text-[11px] mt-2" style={{ color: "#FF5F57" }}>{promptError}</div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </Section>
+
+      {/* Change Password */}
+      <Section title="Change Password">
+        <div className="space-y-2">
+          {[
+            { label: "Current password", value: cpCurrent, set: setCpCurrent },
+            { label: "New password",     value: cpNew,     set: setCpNew     },
+            { label: "Confirm new",      value: cpConfirm, set: setCpConfirm },
+          ].map((f) => (
+            <div key={f.label} className="flex items-center gap-3 px-4 py-3 rounded-xl" style={{ background: "#0C0C0E", border: "1px solid #161618" }}>
+              <span className="text-[12px] w-32 shrink-0" style={{ color: "#6A6A76" }}>{f.label}</span>
+              <div className="relative flex-1">
+                <input
+                  type={showCpPw ? "text" : "password"}
+                  value={f.value}
+                  onChange={(e) => { f.set(e.target.value); setCpMsg(null); }}
+                  placeholder="••••••••"
+                  className="os-input w-full px-3 py-1.5 rounded-lg text-[12px] font-mono"
+                  style={{ userSelect: "text" }}
+                />
+              </div>
+            </div>
+          ))}
+          <div className="flex items-center gap-2 pt-1">
+            <motion.button
+              onClick={submitPasswordChange}
+              className="px-4 py-2 rounded-lg text-[12px] font-medium"
+              style={{ background: "rgba(200,169,126,0.12)", border: "1px solid rgba(200,169,126,0.25)", color: "#C8A97E" }}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              Update Password
+            </motion.button>
+            <button onClick={() => setShowCpPw(v => !v)} className="flex items-center gap-1.5 text-[11px]" style={{ color: "#3A3A42" }}>
+              {showCpPw ? <EyeOff size={12} /> : <Eye size={12} />}
+              {showCpPw ? "Hide" : "Show"}
+            </button>
+            <AnimatePresence>
+              {cpMsg && (
+                <motion.span
+                  initial={{ opacity: 0, x: -4 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-[11px]"
+                  style={{ color: cpMsg.type === "ok" ? "#28C840" : "#FF5F57" }}
+                >
+                  {cpMsg.text}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </Section>
+    </>
   );
 }
 

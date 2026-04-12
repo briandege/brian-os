@@ -32,7 +32,7 @@ import NotificationToast from "@/components/notifications/NotificationToast";
 import MissionControl from "@/components/mission-control/MissionControl";
 import AppSwitcher from "@/components/app-switcher/AppSwitcher";
 import NewsTicker from "@/components/desktop/NewsTicker";
-import { useSettingsStore, applyAccent, applyColorScheme } from "@/lib/settingsStore";
+import { useSettingsStore, applyAccent, applyColorScheme, CLASSIFICATION_CONFIG, type ClassificationLevel } from "@/lib/settingsStore";
 import { useHealthStore } from "@/lib/healthStore";
 import { useUpdateStore } from "@/lib/updateStore";
 import { notify } from "@/lib/notificationStore";
@@ -76,7 +76,8 @@ export default function Desktop() {
   const [switcherIdx, setSwitcherIdx]           = useState(0);
   const accent = useSettingsStore((s) => s.accent);
   const colorScheme = useSettingsStore((s) => s.colorScheme);
-  const topSecretBanners = useSettingsStore((s) => s.topSecretBanners);
+  const classificationLevel = useSettingsStore((s) => s.classificationLevel);
+  const showBanners = classificationLevel !== "none";
 
   const cmdHeld = useRef(false);
 
@@ -225,7 +226,7 @@ export default function Desktop() {
   return (
     <div
       className="fixed inset-0 overflow-hidden"
-      style={{ paddingTop: topSecretBanners ? 68 : 40, paddingBottom: topSecretBanners ? 116 : 88 }}
+      style={{ paddingTop: showBanners ? 68 : 40, paddingBottom: showBanners ? 116 : 88 }}
       onContextMenu={handleContextMenu}
       onClick={closeMenu}
     >
@@ -305,15 +306,17 @@ export default function Desktop() {
       <NotificationToast />
       <NewsTicker />
 
-      {/* ── TOP SECRET Banners ───────────────────────────────────────────── */}
-      {topSecretBanners && <TopSecretBanner position="top" />}
-      {topSecretBanners && <TopSecretBanner position="bottom" />}
+      {/* ── Classification Banners ───────────────────────────────────────── */}
+      {showBanners && <ClassificationBanner position="top"    level={classificationLevel} />}
+      {showBanners && <ClassificationBanner position="bottom" level={classificationLevel} />}
     </div>
   );
 }
 
-// ── TOP SECRET Banner ─────────────────────────────────────────────────────
-function TopSecretBanner({ position }: { position: "top" | "bottom" }) {
+// ── Classification Banner ──────────────────────────────────────────────────
+function ClassificationBanner({ position, level }: { position: "top" | "bottom"; level: ClassificationLevel }) {
+  if (level === "none") return null;
+  const cfg = CLASSIFICATION_CONFIG[level as Exclude<ClassificationLevel, "none">];
   const isTop = position === "top";
   return (
     <div
@@ -321,50 +324,43 @@ function TopSecretBanner({ position }: { position: "top" | "bottom" }) {
       style={{
         [isTop ? "top" : "bottom"]: 0,
         height: 28,
-        background: "linear-gradient(180deg, #C00000 0%, #8B0000 100%)",
+        background: cfg.bg,
         boxShadow: isTop
-          ? "0 2px 8px rgba(139,0,0,0.6), inset 0 -1px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,100,100,0.2)"
-          : "0 -2px 8px rgba(139,0,0,0.6), inset 0 1px 0 rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,100,100,0.2)",
-        borderTop: isTop ? "none" : "1px solid rgba(0,0,0,0.4)",
+          ? `0 2px 8px ${cfg.shadowColor}, inset 0 -1px 0 rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.18)`
+          : `0 -2px 8px ${cfg.shadowColor}, inset 0 1px 0 rgba(0,0,0,0.3), inset 0 -1px 0 rgba(255,255,255,0.18)`,
+        borderTop:    isTop ? "none" : "1px solid rgba(0,0,0,0.4)",
         borderBottom: isTop ? "1px solid rgba(0,0,0,0.4)" : "none",
       }}
     >
-      {/* Left classification markers */}
+      {/* Left */}
       <div className="flex items-center gap-3 pl-4">
-        <span className="font-mono font-black text-[10px] tracking-[0.25em]"
-          style={{ color: "rgba(0,0,0,0.55)" }}>
-          &#47;&#47;TS&#47;&#47;SCI&#47;&#47;NOFORN
+        <span className="font-mono font-black text-[10px] tracking-[0.25em]" style={{ color: "rgba(0,0,0,0.55)" }}>
+          {cfg.markings}
         </span>
         <div className="w-px h-3" style={{ background: "rgba(0,0,0,0.25)" }} />
         <span className="font-mono text-[9px] tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>
-          CLASSIFICATION: BRIAN NDEGE EYES ONLY
+          {cfg.eyesOnly}
         </span>
       </div>
 
-      {/* Center — main label */}
+      {/* Center */}
       <div className="absolute inset-0 flex items-center justify-center">
         <span
           className="font-black tracking-[0.35em] text-[13px] uppercase"
-          style={{
-            color: "#000000",
-            fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif",
-            textShadow: "0 1px 0 rgba(255,80,80,0.3)",
-            letterSpacing: "0.35em",
-          }}
+          style={{ color: "#000000", fontFamily: "'Arial Black', 'Helvetica Neue', sans-serif", textShadow: "0 1px 0 rgba(255,255,255,0.15)" }}
         >
-          ★ TOP SECRET ★
+          ★ {cfg.label} ★
         </span>
       </div>
 
-      {/* Right classification markers */}
+      {/* Right */}
       <div className="flex items-center gap-3 pr-4">
         <span className="font-mono text-[9px] tracking-widest" style={{ color: "rgba(0,0,0,0.4)" }}>
-          HANDLE VIA STRONTIUM CHANNELS ONLY
+          ENC: {cfg.encryption}
         </span>
         <div className="w-px h-3" style={{ background: "rgba(0,0,0,0.25)" }} />
-        <span className="font-mono font-black text-[10px] tracking-[0.25em]"
-          style={{ color: "rgba(0,0,0,0.55)" }}>
-          &#47;&#47;TS&#47;&#47;SCI&#47;&#47;NOFORN
+        <span className="font-mono font-black text-[10px] tracking-[0.25em]" style={{ color: "rgba(0,0,0,0.55)" }}>
+          {cfg.markings}
         </span>
       </div>
     </div>

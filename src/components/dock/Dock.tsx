@@ -143,12 +143,13 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
 
 export default function Dock() {
   const mouseX = useMotionValue(Infinity);
-  const topSecretBanners = useSettingsStore((s) => s.topSecretBanners);
+  const classificationLevel = useSettingsStore((s) => s.classificationLevel);
+  const showBanners = classificationLevel !== "none";
 
   return (
     <div
       className="fixed left-1/2 z-45 -translate-x-1/2 flex items-end"
-      style={{ bottom: topSecretBanners ? 32 : 16 }}
+      style={{ bottom: showBanners ? 32 : 16 }}
       onMouseMove={(e) => mouseX.set(e.clientX)}
       onMouseLeave={() => mouseX.set(Infinity)}
     >

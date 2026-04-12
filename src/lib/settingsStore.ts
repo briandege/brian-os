@@ -7,6 +7,45 @@ export type WallpaperStyle = "grid" | "dots" | "noise" | "none";
 export type TerminalTheme = "void" | "matrix" | "amber" | "ice";
 export type TerminalCursor = "block" | "bar" | "underline";
 export type AnimationSpeed = "fast" | "normal" | "slow";
+export type ClassificationLevel = "none" | "confidential" | "secret" | "top-secret";
+
+export const CLASSIFICATION_CONFIG: Record<Exclude<ClassificationLevel, "none">, {
+  label: string;
+  bg: string;
+  shadowColor: string;
+  encryption: string;
+  markings: string;
+  channel: string;
+  eyesOnly: string;
+}> = {
+  confidential: {
+    label:       "CONFIDENTIAL",
+    bg:          "linear-gradient(180deg, #1A3F8C 0%, #0D2666 100%)",
+    shadowColor: "rgba(13,38,102,0.7)",
+    encryption:  "AES-128-CBC · TLS 1.3",
+    markings:    "//CONF//NOFORN",
+    channel:     "HANDLE VIA CONF CHANNELS ONLY",
+    eyesOnly:    "AUTHORIZED PERSONNEL ONLY",
+  },
+  secret: {
+    label:       "SECRET",
+    bg:          "linear-gradient(180deg, #B80000 0%, #7A0000 100%)",
+    shadowColor: "rgba(122,0,0,0.7)",
+    encryption:  "AES-256-CBC · TLS 1.3",
+    markings:    "//SECRET//NOFORN",
+    channel:     "HANDLE VIA SECRET CHANNELS ONLY",
+    eyesOnly:    "NEED-TO-KNOW REQUIRED",
+  },
+  "top-secret": {
+    label:       "TOP SECRET",
+    bg:          "linear-gradient(180deg, #C00000 0%, #8B0000 100%)",
+    shadowColor: "rgba(139,0,0,0.7)",
+    encryption:  "AES-256-GCM · TLS 1.3 · FIPS 140-3",
+    markings:    "//TS//SCI//NOFORN",
+    channel:     "HANDLE VIA STRONTIUM CHANNELS ONLY",
+    eyesOnly:    "CLASSIFICATION: BRIAN NDEGE EYES ONLY",
+  },
+};
 
 export const ACCENT_PALETTE: Record<AccentColor, { primary: string; dim: string; bright: string; label: string }> = {
   tan:    { primary: "#C8A97E", dim: "#7A6348", bright: "#DFC49A", label: "Gold"   },
@@ -44,21 +83,24 @@ interface SettingsState {
   animationSpeed: AnimationSpeed;
   colorScheme: "dark" | "light";
   doNotDisturb: boolean;
-  topSecretBanners: boolean;
+  // classification
+  classificationLevel: ClassificationLevel;
+  classificationPassword: string;
   // actions
-  setAccent:             (a: AccentColor)      => void;
-  setWallpaper:          (w: WallpaperStyle)   => void;
-  toggleStartupApp:      (id: AppId)           => void;
-  setReduceMotion:       (v: boolean)          => void;
-  setTerminalFontSize:   (n: number)           => void;
-  setTerminalTheme:      (t: TerminalTheme)    => void;
-  setTerminalCursor:     (c: TerminalCursor)   => void;
-  setTerminalScrollback: (n: number)           => void;
-  setDockMagnification:  (v: boolean)          => void;
-  setAnimationSpeed:     (s: AnimationSpeed)   => void;
-  setColorScheme:        (s: "dark" | "light")  => void;
-  setDoNotDisturb:       (v: boolean)          => void;
-  setTopSecretBanners:   (v: boolean)          => void;
+  setAccent:                  (a: AccentColor)           => void;
+  setWallpaper:               (w: WallpaperStyle)        => void;
+  toggleStartupApp:           (id: AppId)                => void;
+  setReduceMotion:            (v: boolean)               => void;
+  setTerminalFontSize:        (n: number)                => void;
+  setTerminalTheme:           (t: TerminalTheme)         => void;
+  setTerminalCursor:          (c: TerminalCursor)        => void;
+  setTerminalScrollback:      (n: number)                => void;
+  setDockMagnification:       (v: boolean)               => void;
+  setAnimationSpeed:          (s: AnimationSpeed)        => void;
+  setColorScheme:             (s: "dark" | "light")      => void;
+  setDoNotDisturb:            (v: boolean)               => void;
+  setClassificationLevel:     (l: ClassificationLevel)   => void;
+  setClassificationPassword:  (p: string)                => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
@@ -72,30 +114,32 @@ export const useSettingsStore = create<SettingsState>()(
       terminalTheme:       "void",
       terminalCursor:      "block",
       terminalScrollback:  5000,
-      dockMagnification:   true,
-      animationSpeed:      "normal",
-      colorScheme:         "dark",
-      doNotDisturb:        false,
-      topSecretBanners:    true,
+      dockMagnification:      true,
+      animationSpeed:         "normal",
+      colorScheme:            "dark",
+      doNotDisturb:           false,
+      classificationLevel:    "top-secret",
+      classificationPassword: "admin",
 
-      setAccent:             (accent)              => set({ accent }),
-      setWallpaper:          (wallpaper)           => set({ wallpaper }),
-      toggleStartupApp:      (id) =>
+      setAccent:                  (accent)               => set({ accent }),
+      setWallpaper:               (wallpaper)            => set({ wallpaper }),
+      toggleStartupApp:           (id) =>
         set((s) => ({
           startupApps: s.startupApps.includes(id)
             ? s.startupApps.filter((a) => a !== id)
             : [...s.startupApps, id],
         })),
-      setReduceMotion:       (reduceMotion)        => set({ reduceMotion }),
-      setTerminalFontSize:   (terminalFontSize)    => set({ terminalFontSize }),
-      setTerminalTheme:      (terminalTheme)       => set({ terminalTheme }),
-      setTerminalCursor:     (terminalCursor)      => set({ terminalCursor }),
-      setTerminalScrollback: (terminalScrollback)  => set({ terminalScrollback }),
-      setDockMagnification:  (dockMagnification)   => set({ dockMagnification }),
-      setAnimationSpeed:     (animationSpeed)      => set({ animationSpeed }),
-      setColorScheme:        (colorScheme)          => set({ colorScheme }),
-      setDoNotDisturb:       (doNotDisturb)        => set({ doNotDisturb }),
-      setTopSecretBanners:   (topSecretBanners)    => set({ topSecretBanners }),
+      setReduceMotion:            (reduceMotion)         => set({ reduceMotion }),
+      setTerminalFontSize:        (terminalFontSize)     => set({ terminalFontSize }),
+      setTerminalTheme:           (terminalTheme)        => set({ terminalTheme }),
+      setTerminalCursor:          (terminalCursor)       => set({ terminalCursor }),
+      setTerminalScrollback:      (terminalScrollback)   => set({ terminalScrollback }),
+      setDockMagnification:       (dockMagnification)    => set({ dockMagnification }),
+      setAnimationSpeed:          (animationSpeed)       => set({ animationSpeed }),
+      setColorScheme:             (colorScheme)          => set({ colorScheme }),
+      setDoNotDisturb:            (doNotDisturb)         => set({ doNotDisturb }),
+      setClassificationLevel:     (classificationLevel)  => set({ classificationLevel }),
+      setClassificationPassword:  (classificationPassword) => set({ classificationPassword }),
     }),
     { name: "strontium-settings" }
   )
