@@ -285,7 +285,10 @@ ipcMain.handle("audio:setVolume", (_, level) => {
   const { execSync } = require("child_process");
   try {
     if (process.platform === "darwin") {
-      execSync(`osascript -e "set volume output volume ${level}"`);
+      // Sanitize to integer 0-100 before interpolating into shell command
+      const safeLevel = Math.max(0, Math.min(100, parseInt(level, 10)));
+      if (isNaN(safeLevel)) return;
+      execSync(`osascript -e "set volume output volume ${safeLevel}"`);
     }
   } catch { /* ignore */ }
 });

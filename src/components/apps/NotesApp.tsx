@@ -28,7 +28,10 @@ function renderMarkdown(md: string) {
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 rounded text-[11px]" style="background:rgba(200,169,126,0.1);color:#C8A97E">$1</code>')
-      .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color:#C8A97E;text-decoration:underline">$1</a>');
+      .replace(/\[(.+?)\]\((.+?)\)/g, (_, text, url) => {
+        const safe = /^https?:\/\//i.test(url) ? url : "#";
+        return `<a href="${safe}" style="color:#C8A97E;text-decoration:underline">${text}</a>`;
+      });
 
     if (!line.trim()) return <div key={i} className="h-2" />;
     return <p key={i} className="text-[12px] leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }} dangerouslySetInnerHTML={{ __html: html }} />;

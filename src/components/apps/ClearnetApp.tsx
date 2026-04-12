@@ -2,10 +2,10 @@
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, RefreshCw, ExternalLink, Lock, ShieldAlert } from "lucide-react";
-
-const ADMIN_PASSWORD = "strontium";
+import { useSettingsStore } from "@/lib/settingsStore";
 
 export default function ClearnetApp() {
+  const classificationPassword = useSettingsStore((s) => s.classificationPassword);
   const [unlocked, setUnlocked]   = useState(false);
   const [input, setInput]         = useState("");
   const [error, setError]         = useState("");
@@ -16,13 +16,13 @@ export default function ClearnetApp() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const tryUnlock = useCallback(() => {
-    if (input === ADMIN_PASSWORD) {
+    if (input === classificationPassword) {
       setUnlocked(true);
       setError("");
     } else {
       const next = attempts + 1;
       setAttempts(next);
-      setError(next >= 3 ? `Access denied (${next} attempts). Hint: the OS name.` : "Incorrect password.");
+      setError(next >= 3 ? `Access denied (${next} attempts). Use your system password.` : "Incorrect password.");
       setInput("");
       inputRef.current?.focus();
     }

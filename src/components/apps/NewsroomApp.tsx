@@ -27,15 +27,23 @@ function slugify(s: string): string {
 }
 
 // ── Markdown preview ─────────────────────────────────────────────────────────
+function sanitizeHtml(raw: string): string {
+  // Strip script tags, event handlers, and javascript: URIs to prevent XSS
+  return raw
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+\s*=\s*["'][^"']*["']/gi, "")
+    .replace(/href\s*=\s*["']javascript:[^"']*["']/gi, 'href="#"');
+}
+
 function MarkdownPreview({ body }: { body: string }) {
-  const html = body
+  const html = sanitizeHtml(body
     .replace(/^### (.+)$/gm, '<h3 style="font-size:14px;font-weight:700;margin:12px 0 4px;color:#F0EDE6">$1</h3>')
     .replace(/^## (.+)$/gm, '<h2 style="font-size:16px;font-weight:700;margin:14px 0 6px;color:#F0EDE6">$1</h2>')
     .replace(/^# (.+)$/gm, '<h1 style="font-size:18px;font-weight:700;margin:16px 0 8px;color:#F0EDE6">$1</h1>')
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, '<code style="background:rgba(255,255,255,0.06);padding:1px 4px;border-radius:3px;font-size:11px;color:#C8A97E">$1</code>')
-    .replace(/\n/g, "<br/>");
+    .replace(/\n/g, "<br/>"));
   return (
     <div
       className="text-[13px] leading-relaxed p-5"
