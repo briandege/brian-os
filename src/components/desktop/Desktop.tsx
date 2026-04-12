@@ -383,19 +383,24 @@ function Wallpaper() {
       }} />
 
       {/* Ambient color atmosphere — the "soul" of the wallpaper */}
-      <div className="absolute inset-0" style={{
-        background: [
-          /* warm gold center glow */
-          "radial-gradient(ellipse 70% 55% at 50% 52%, rgba(200,155,80,0.22) 0%, transparent 65%)",
-          /* cool indigo top-left accent */
-          "radial-gradient(ellipse 50% 40% at 15% 20%, rgba(80,100,200,0.14) 0%, transparent 60%)",
-          /* deep purple bottom-right */
-          "radial-gradient(ellipse 45% 35% at 85% 80%, rgba(120,60,180,0.10) 0%, transparent 55%)",
-          /* subtle teal top-right */
-          "radial-gradient(ellipse 35% 30% at 88% 18%, rgba(40,160,180,0.08) 0%, transparent 50%)",
-        ].join(", "),
-        zIndex: 1,
-      }} />
+      <motion.div
+        className="absolute inset-0"
+        animate={{ opacity: [0.85, 1, 0.82, 1, 0.85] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+        style={{
+          background: [
+            /* warm gold center glow */
+            "radial-gradient(ellipse 70% 55% at 50% 52%, rgba(200,155,80,0.22) 0%, transparent 65%)",
+            /* cool indigo top-left accent */
+            "radial-gradient(ellipse 50% 40% at 15% 20%, rgba(80,100,200,0.14) 0%, transparent 60%)",
+            /* deep purple bottom-right */
+            "radial-gradient(ellipse 45% 35% at 85% 80%, rgba(120,60,180,0.10) 0%, transparent 55%)",
+            /* subtle teal top-right */
+            "radial-gradient(ellipse 35% 30% at 88% 18%, rgba(40,160,180,0.08) 0%, transparent 50%)",
+          ].join(", "),
+          zIndex: 1,
+        }}
+      />
 
       {/* Pattern layer */}
       {wallpaper === "grid" && (

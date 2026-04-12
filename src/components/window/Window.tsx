@@ -127,7 +127,6 @@ export default function Window({ win, children }: Props) {
     return () => window.removeEventListener("resize", update);
   }, [win.size.width, win.size.height]);
 
-  if (win.isMinimized) return null;
   const isMax = win.isMaximized;
 
   return (
@@ -147,12 +146,16 @@ export default function Window({ win, children }: Props) {
         border: isFocused
           ? "1px solid rgba(200,169,126,0.32)"
           : "1px solid rgba(255,255,255,0.09)",
+        pointerEvents: win.isMinimized ? "none" : "auto",
+        transition: "width 0.32s cubic-bezier(0.4,0,0.2,1), height 0.32s cubic-bezier(0.4,0,0.2,1), top 0.32s cubic-bezier(0.4,0,0.2,1), border-radius 0.32s cubic-bezier(0.4,0,0.2,1)",
       }}
-      initial={{ scale: 0.9, opacity: 0 }}
-      animate={{ scale: 1, opacity: 1 }}
-      exit={{ scale: 0.9, opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }}
-      transition={{ type: "spring", stiffness: 420, damping: 34, mass: 0.75 }}
-      drag={!isMax}
+      initial={{ scale: 0.88, opacity: 0 }}
+      animate={win.isMinimized
+        ? { scale: 0.05, opacity: 0, transition: { duration: 0.24, ease: [0.4, 0, 1, 1] } }
+        : { scale: 1,    opacity: 1, transition: { type: "spring", stiffness: 280, damping: 26, mass: 0.85 } }
+      }
+      exit={{ scale: 0.88, opacity: 0, transition: { duration: 0.18, ease: [0.4, 0, 1, 1] } }}
+      drag={!isMax && !win.isMinimized}
       dragControls={dragControls}
       dragListener={false}
       dragMomentum={false}

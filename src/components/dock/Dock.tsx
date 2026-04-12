@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import {
-  motion,
+  motion, AnimatePresence,
   useMotionValue, useSpring, useTransform,
   type MotionValue,
 } from "framer-motion";
@@ -60,8 +60,8 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
   const scaleRaw = useTransform(distance, [0, 70, 130], dockMagnification ? [1.6, 1.2, 1] : [1, 1, 1], { clamp: true });
   const yRaw     = useTransform(distance, [0, 70, 130], dockMagnification ? [-16, -5, 0] : [0, 0, 0],  { clamp: true });
 
-  const scale = useSpring(scaleRaw, { stiffness: 420, damping: 28, mass: 0.6 });
-  const y     = useSpring(yRaw,     { stiffness: 420, damping: 28, mass: 0.6 });
+  const scale = useSpring(scaleRaw, { stiffness: 340, damping: 24, mass: 0.55 });
+  const y     = useSpring(yRaw,     { stiffness: 340, damping: 24, mass: 0.55 });
 
   return (
     <div
@@ -71,26 +71,28 @@ function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX:
       onMouseLeave={() => setShowTooltip(false)}
     >
       {/* Tooltip */}
-      {showTooltip && (
-        <motion.div
-          initial={{ opacity: 0, y: 4, scale: 0.92 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.1 }}
-          className="absolute bottom-[calc(100%+14px)] whitespace-nowrap text-[11px] px-2.5 py-1 rounded-lg font-medium pointer-events-none z-50"
-          style={{
-            background: "rgba(22,22,28,0.95)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            color: "#F0EDE6",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-          }}
-        >
-          {app.label}
-          <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-1 overflow-hidden" style={{ marginTop: -1 }}>
-            <div className="w-2 h-2 rotate-45 origin-top-left" style={{ background: "rgba(22,22,28,0.95)", border: "1px solid rgba(255,255,255,0.07)" }} />
-          </div>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {showTooltip && (
+          <motion.div
+            initial={{ opacity: 0, y: 6, scale: 0.88 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 4, scale: 0.92, transition: { duration: 0.1, ease: "easeIn" } }}
+            transition={{ type: "spring", stiffness: 400, damping: 28, mass: 0.5 }}
+            className="absolute bottom-[calc(100%+14px)] whitespace-nowrap text-[11px] px-2.5 py-1 rounded-lg font-medium pointer-events-none z-50"
+            style={{
+              background: "rgba(22,22,28,0.95)",
+              border: "1px solid rgba(255,255,255,0.07)",
+              color: "#F0EDE6",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
+            }}
+          >
+            {app.label}
+            <div className="absolute top-full left-1/2 -translate-x-1/2 w-2 h-1 overflow-hidden" style={{ marginTop: -1 }}>
+              <div className="w-2 h-2 rotate-45 origin-top-left" style={{ background: "rgba(22,22,28,0.95)", border: "1px solid rgba(255,255,255,0.07)" }} />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Icon */}
       <motion.button
