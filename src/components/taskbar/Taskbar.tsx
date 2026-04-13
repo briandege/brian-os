@@ -8,6 +8,7 @@ import { useSettingsStore } from "@/lib/settingsStore";
 import { useHealthStore, formatUptime } from "@/lib/healthStore";
 import NotificationCenter from "@/components/notifications/NotificationCenter";
 import ControlCenter from "@/components/control-center/ControlCenter";
+import { useOverlayStore } from "@/lib/overlayStore";
 
 export default function Taskbar() {
   const { windows, focusedId } = useWindowStore();
@@ -23,6 +24,7 @@ export default function Taskbar() {
   const uptimeSeconds = useHealthStore((s) => s.uptimeSeconds);
   const showUptimeBadge = useHealthStore((s) => s.showUptimeBadge);
   const { open: openApp } = useWindowStore();
+  const { openStartScreen } = useOverlayStore();
 
   useEffect(() => {
     const tick = () => {
@@ -82,8 +84,11 @@ export default function Taskbar() {
 
         <div className="flex items-center h-full px-4">
 
-          {/* ── Left: Brand ─────────────────────────────────────────────── */}
-          <div className="flex items-center gap-2.5 shrink-0 w-[172px]">
+          {/* ── Left: Brand — click to open start screen / power menu ────── */}
+          <div
+            className="flex items-center gap-2.5 shrink-0 w-[172px] cursor-pointer select-none"
+            onClick={openStartScreen}
+          >
             <div className="relative flex items-center justify-center">
               <motion.div
                 className="w-1.5 h-1.5 rounded-full"

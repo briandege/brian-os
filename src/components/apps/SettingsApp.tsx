@@ -78,7 +78,7 @@ export default function SettingsApp() {
     animationSpeed, setAnimationSpeed,
     startupApps, toggleStartupApp,
     classificationLevel, setClassificationLevel,
-    classificationPassword, setClassificationPassword,
+    setClassificationPassword, verifyClassificationPassword,
   } = useSettingsStore();
 
   useEffect(() => { applyAccent(accent); }, [accent]);
@@ -191,9 +191,9 @@ export default function SettingsApp() {
         {section === "security" && (
           <SecuritySection
             level={classificationLevel}
-            password={classificationPassword}
             onLevelChange={setClassificationLevel}
             onPasswordChange={setClassificationPassword}
+            verifyPassword={verifyClassificationPassword}
           />
         )}
 
@@ -469,12 +469,12 @@ const LEVELS: { id: ClassificationLevel; label: string; color: string; desc: str
 ];
 
 function SecuritySection({
-  level, password, onLevelChange, onPasswordChange,
+  level, onLevelChange, onPasswordChange, verifyPassword,
 }: {
   level: ClassificationLevel;
-  password: string;
   onLevelChange: (l: ClassificationLevel) => void;
-  onPasswordChange: (p: string) => void;
+  onPasswordChange: (p: string) => Promise<void>;
+  verifyPassword: (attempt: string) => Promise<boolean>;
 }) {
   const [promptTarget, setPromptTarget] = useState<ClassificationLevel | null>(null);
   const [promptInput, setPromptInput]   = useState("");
@@ -488,8 +488,9 @@ function SecuritySection({
   const [cpMsg, setCpMsg]           = useState<{ type: "ok" | "err"; text: string } | null>(null);
   const [showCpPw, setShowCpPw]     = useState(false);
 
-  const submitPrompt = () => {
-    if (promptInput === password) {
+  const submitPrompt = async () => {
+    const ok = await verifyPassword(promptInput);
+    if (ok) {
       onLevelChange(promptTarget!);
       setPromptTarget(null);
       setPromptInput("");
@@ -500,13 +501,14 @@ function SecuritySection({
     }
   };
 
-  const submitPasswordChange = () => {
-    if (cpCurrent !== password)  { setCpMsg({ type: "err", text: "Current password incorrect" }); return; }
-    if (cpNew.length < 1)        { setCpMsg({ type: "err", text: "New password cannot be empty" }); return; }
-    if (cpNew !== cpConfirm)     { setCpMsg({ type: "err", text: "Passwords do not match" }); return; }
-    onPasswordChange(cpNew);
+  const submitPasswordChange = async () => {
+    const ok = await verifyPassword(cpCurrent);
+    if (!ok)               { setCpMsg({ type: "err", text: "Current password incorrect" }); return; }
+    if (cpNew.length < 1)  { setCpMsg({ type: "err", text: "New password cannot be empty" }); return; }
+    if (cpNew !== cpConfirm) { setCpMsg({ type: "err", text: "Passwords do not match" }); return; }
+    await onPasswordChange(cpNew);
     setCpCurrent(""); setCpNew(""); setCpConfirm("");
-    setCpMsg({ type: "ok", text: "Password updated" });
+    setCpMsg({ type: "ok", text: "Password updated — PBKDF2-SHA256 hash stored" });
     setTimeout(() => setCpMsg(null), 2500);
   };
 

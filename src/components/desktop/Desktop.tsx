@@ -29,6 +29,7 @@ import MediaPlayerApp from "@/components/apps/MediaPlayerApp";
 import ClipboardApp from "@/components/apps/ClipboardApp";
 import Spotlight from "@/components/spotlight/Spotlight";
 import NotificationToast from "@/components/notifications/NotificationToast";
+import StartScreen from "@/components/overlays/StartScreen";
 import MissionControl from "@/components/mission-control/MissionControl";
 import AppSwitcher from "@/components/app-switcher/AppSwitcher";
 import NewsTicker from "@/components/desktop/NewsTicker";
@@ -309,6 +310,9 @@ export default function Desktop() {
       {/* ── Classification Banners ───────────────────────────────────────── */}
       {showBanners && <ClassificationBanner position="top"    level={classificationLevel} />}
       {showBanners && <ClassificationBanner position="bottom" level={classificationLevel} />}
+
+      {/* ── System Overlays (lock screen, power menu, transitions) ───────── */}
+      <StartScreen />
     </div>
   );
 }

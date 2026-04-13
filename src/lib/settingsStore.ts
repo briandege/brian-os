@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppId } from "@/types";
+import { hashPassword, verifyPassword } from "@/lib/crypto";
 
 export type AccentColor = "tan" | "blue" | "purple" | "green" | "red";
 export type WallpaperStyle = "grid" | "dots" | "noise" | "none";
@@ -22,7 +23,7 @@ export const CLASSIFICATION_CONFIG: Record<Exclude<ClassificationLevel, "none">,
     label:       "CONFIDENTIAL",
     bg:          "linear-gradient(180deg, #1A3F8C 0%, #0D2666 100%)",
     shadowColor: "rgba(13,38,102,0.7)",
-    encryption:  "AES-128-CBC · TLS 1.3",
+    encryption:  "AES-256-GCM · X25519+ML-KEM-768",
     markings:    "//CONF//NOFORN",
     channel:     "HANDLE VIA CONF CHANNELS ONLY",
     eyesOnly:    "AUTHORIZED PERSONNEL ONLY",
@@ -31,7 +32,7 @@ export const CLASSIFICATION_CONFIG: Record<Exclude<ClassificationLevel, "none">,
     label:       "SECRET",
     bg:          "linear-gradient(180deg, #B80000 0%, #7A0000 100%)",
     shadowColor: "rgba(122,0,0,0.7)",
-    encryption:  "AES-256-CBC · TLS 1.3",
+    encryption:  "AES-256-GCM · ML-KEM-768 · FIPS 203",
     markings:    "//SECRET//NOFORN",
     channel:     "HANDLE VIA SECRET CHANNELS ONLY",
     eyesOnly:    "NEED-TO-KNOW REQUIRED",
@@ -40,7 +41,7 @@ export const CLASSIFICATION_CONFIG: Record<Exclude<ClassificationLevel, "none">,
     label:       "TOP SECRET",
     bg:          "linear-gradient(180deg, #C00000 0%, #8B0000 100%)",
     shadowColor: "rgba(139,0,0,0.7)",
-    encryption:  "AES-256-GCM · TLS 1.3 · FIPS 140-3",
+    encryption:  "ML-KEM-1024 · SLH-DSA · FIPS 203/205",
     markings:    "//TS//SCI//NOFORN",
     channel:     "HANDLE VIA STRONTIUM CHANNELS ONLY",
     eyesOnly:    "CLASSIFICATION: BRIAN NDEGE EYES ONLY",
@@ -84,8 +85,9 @@ interface SettingsState {
   colorScheme: "dark" | "light";
   doNotDisturb: boolean;
   // classification
-  classificationLevel: ClassificationLevel;
-  classificationPassword: string;
+  classificationLevel:    ClassificationLevel;
+  /** SHA-256 hash of the password (never stores plaintext) */
+  classificationPasswordHash: string;
   // actions
   setAccent:                  (a: AccentColor)           => void;
   setWallpaper:               (w: WallpaperStyle)        => void;
@@ -100,13 +102,16 @@ interface SettingsState {
   setColorScheme:             (s: "dark" | "light")      => void;
   setDoNotDisturb:            (v: boolean)               => void;
   setClassificationLevel:     (l: ClassificationLevel)   => void;
-  setClassificationPassword:  (p: string)                => void;
+  /** Pass the NEW plaintext password — it will be hashed before storing */
+  setClassificationPassword:  (p: string)                => Promise<void>;
+  /** Verify a plaintext attempt against the stored hash */
+  verifyClassificationPassword: (attempt: string)        => Promise<boolean>;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
-    (set) => ({
-      accent:              "tan",
+    (set, get) => ({
+      accent:              "tan" as AccentColor,
       wallpaper:           "grid",
       startupApps:         DEFAULT_STARTUP_APPS,
       reduceMotion:        false,
@@ -118,8 +123,9 @@ export const useSettingsStore = create<SettingsState>()(
       animationSpeed:         "normal",
       colorScheme:            "dark",
       doNotDisturb:           false,
-      classificationLevel:    "top-secret",
-      classificationPassword: "admin",
+      classificationLevel: "top-secret",
+      // SHA-256("strontium.os::v1::admin") — default password is "admin"
+      classificationPasswordHash: "bec0e4b5194587d3eb5dbc835fe4468ed15c1b209ac94205c408b07bfc65f98c",
 
       setAccent:                  (accent)               => set({ accent }),
       setWallpaper:               (wallpaper)            => set({ wallpaper }),
@@ -139,7 +145,14 @@ export const useSettingsStore = create<SettingsState>()(
       setColorScheme:             (colorScheme)          => set({ colorScheme }),
       setDoNotDisturb:            (doNotDisturb)         => set({ doNotDisturb }),
       setClassificationLevel:     (classificationLevel)  => set({ classificationLevel }),
-      setClassificationPassword:  (classificationPassword) => set({ classificationPassword }),
+      setClassificationPassword:  async (plaintext) => {
+        const classificationPasswordHash = await hashPassword(plaintext);
+        set({ classificationPasswordHash });
+      },
+      verifyClassificationPassword: async (attempt: string): Promise<boolean> => {
+        const hash = get().classificationPasswordHash;
+        return verifyPassword(attempt, hash);
+      },
     }),
     { name: "strontium-settings" }
   )

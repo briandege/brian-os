@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, shell, Menu, session,
-  ipcMain, protocol, net,
+  ipcMain, protocol, net, powerMonitor, systemPreferences,
 } = require("electron");
 const path = require("path");
 const fs   = require("fs");
@@ -491,6 +491,29 @@ function setupJupyter(win) {
   ipcMain.handle("jupyter:state", () => _jupyterState);
 }
 
+// ── Biometric authentication (Touch ID) ──────────────────────────────────────
+
+ipcMain.handle("auth:biometric", async () => {
+  try {
+    if (isMac) {
+      const canPrompt = systemPreferences.canPromptTouchID?.();
+      if (!canPrompt) return { ok: false, error: "Touch ID not available" };
+      await systemPreferences.promptTouchID("Unlock strontium.os");
+      return { ok: true };
+    }
+    return { ok: false, error: "Biometrics not supported on this platform" };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  }
+});
+
+ipcMain.handle("auth:canBiometric", () => {
+  try {
+    if (isMac) return { available: !!systemPreferences.canPromptTouchID?.() };
+    return { available: false };
+  } catch { return { available: false }; }
+});
+
 // ── Power actions (Module 1) ──────────────────────────────────────────────────
 
 ipcMain.handle("power:action", async (_, action) => {
@@ -613,6 +636,14 @@ function createWindow() {
   win.once("ready-to-show", () => {
     win.show();
     if (!isDev) win.maximize();
+  });
+
+  // Lock screen on system wake from sleep/suspend
+  powerMonitor.on("resume", () => {
+    if (!win.isDestroyed()) win.webContents.send("system:lock");
+  });
+  powerMonitor.on("unlock-screen", () => {
+    if (!win.isDestroyed()) win.webContents.send("system:lock");
   });
 
   // Open external links in system browser

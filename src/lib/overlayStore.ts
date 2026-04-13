@@ -18,10 +18,12 @@ interface OverlayStore {
   dismiss: () => void;
   executePowerAction: (action: PowerAction) => void;
   unlock: () => void;
+  lock: () => void;
 }
 
 export const useOverlayStore = create<OverlayStore>((set, get) => ({
-  state: "idle",
+  // Start locked — every boot requires authentication
+  state: "locked",
 
   openStartScreen() {
     if (get().state === "idle") set({ state: "start-screen" });
@@ -33,6 +35,11 @@ export const useOverlayStore = create<OverlayStore>((set, get) => ({
 
   unlock() {
     if (get().state === "locked") set({ state: "idle" });
+  },
+
+  lock() {
+    set({ state: "locking" });
+    setTimeout(() => set({ state: "locked" }), 500);
   },
 
   executePowerAction(action: PowerAction) {

@@ -36,6 +36,10 @@ declare global {
       captureScreenshot: () => Promise<string | null>;
       // Power (Module 1)
       powerAction: (action: "shutdown" | "restart" | "sleep" | "logout") => Promise<{ ok: boolean; error?: string }>;
+      // Biometric auth
+      biometricAuth: () => Promise<{ ok: boolean; error?: string }>;
+      canBiometric:  () => Promise<{ available: boolean }>;
+      onSystemLock:  (cb: () => void) => () => void;
       // Settings bridge (Module 2)
       setBrightness:   (level: number)  => Promise<{ ok: boolean; error?: string }>;
       getBrightness:   ()               => Promise<{ ok: boolean; value: number }>;

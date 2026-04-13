@@ -57,6 +57,15 @@ contextBridge.exposeInMainWorld("electronAPI", {
   // ── Power (Module 1) ─────────────────────────────────────────────
   powerAction: (action) => ipcRenderer.invoke("power:action", action),
 
+  // ── Biometric auth ───────────────────────────────────────────────
+  biometricAuth:    ()  => ipcRenderer.invoke("auth:biometric"),
+  canBiometric:     ()  => ipcRenderer.invoke("auth:canBiometric"),
+  onSystemLock: (cb) => {
+    const h = () => cb();
+    ipcRenderer.on("system:lock", h);
+    return () => ipcRenderer.removeListener("system:lock", h);
+  },
+
   // ── Settings bridge (Module 2) ───────────────────────────────────
   setBrightness:   (level)  => ipcRenderer.invoke("settings:setBrightness", level),
   getBrightness:   ()       => ipcRenderer.invoke("settings:getBrightness"),

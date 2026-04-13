@@ -5,7 +5,7 @@ import { Globe, RefreshCw, ExternalLink, Lock, ShieldAlert } from "lucide-react"
 import { useSettingsStore } from "@/lib/settingsStore";
 
 export default function ClearnetApp() {
-  const classificationPassword = useSettingsStore((s) => s.classificationPassword);
+  const verifyPassword = useSettingsStore((s) => s.verifyClassificationPassword);
   const [unlocked, setUnlocked]   = useState(false);
   const [input, setInput]         = useState("");
   const [error, setError]         = useState("");
@@ -15,8 +15,9 @@ export default function ClearnetApp() {
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const tryUnlock = useCallback(() => {
-    if (input === classificationPassword) {
+  const tryUnlock = useCallback(async () => {
+    const ok = await verifyPassword(input);
+    if (ok) {
       setUnlocked(true);
       setError("");
     } else {
@@ -26,7 +27,7 @@ export default function ClearnetApp() {
       setInput("");
       inputRef.current?.focus();
     }
-  }, [input, attempts]);
+  }, [input, attempts, verifyPassword]);
 
   const navigate = useCallback(() => {
     if (!addressInput.trim()) return;
