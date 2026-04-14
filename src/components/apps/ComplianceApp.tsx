@@ -451,6 +451,11 @@ export default function ComplianceApp() {
                 title: "Independence",
                 text: "Each supervisory authority shall act with complete independence in performing its tasks and exercising its powers. The member or members of each supervisory authority shall, in the performance of their tasks and exercise of their powers, remain free from external influence.",
                 impl: "The auditStore is architecturally isolated: only the audit() helper can append events. Other stores cannot mutate or read the audit log directly. The store uses its own persistence key (strontium-audit-log) separate from all other stores.",
+                provisions: [
+                  "Each Member State shall provide by law for: the establishment of each supervisory authority; the qualifications and eligibility conditions required to be appointed as member; the rules and procedures for appointment; the duration of the term of no less than four years; eligibility conditions for reappointment; and the conditions governing the obligations of members and staff.",
+                  "The member or members and staff of each supervisory authority shall, in accordance with Union or Member State law, be subject to a duty of professional secrecy both during and after their term of office, with regard to any confidential information which has come to their knowledge in the course of their tasks or exercise of their powers.",
+                  "During their term of office, the duty of professional secrecy shall in particular apply to reporting by natural persons of infringements of this Regulation.",
+                ],
               },
               {
                 number: "Article 5",
@@ -496,6 +501,22 @@ export default function ComplianceApp() {
                   <p className="text-[11px] leading-relaxed" style={{ color: "#6A6A7E" }}>
                     {article.text}
                   </p>
+                  {"provisions" in article && (article as { provisions: string[] }).provisions.length > 0 && (
+                    <div
+                      className="space-y-1.5 p-2.5 rounded-lg"
+                      style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}
+                    >
+                      <div className="text-[9px] font-mono tracking-widest uppercase mb-2" style={{ color: "#3A3A4A" }}>
+                        Statutory Provisions
+                      </div>
+                      {(article as { provisions: string[] }).provisions.map((p, i) => (
+                        <div key={i} className="flex items-start gap-2">
+                          <div className="w-1 h-1 rounded-full mt-1.5 shrink-0" style={{ background: "#C8A97E", opacity: 0.4 }} />
+                          <p className="text-[10px] leading-relaxed" style={{ color: "#5A5A6A" }}>{p}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div
                     className="text-[10px] font-mono leading-relaxed p-2.5 rounded-lg"
                     style={{ background: "rgba(200,169,126,0.04)", color: "#8A8A6A", borderLeft: "2px solid rgba(200,169,126,0.2)" }}

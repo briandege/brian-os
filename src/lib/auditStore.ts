@@ -1,3 +1,4 @@
+"use client";
 /**
  * auditStore.ts — GDPR Art. 51/52 independent supervisory layer
  *
