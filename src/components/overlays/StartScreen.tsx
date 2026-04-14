@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Power, Moon, RotateCcw, Lock, LogOut, Fingerprint } from "lucide-react";
+import { Power, Moon, RotateCcw, Lock, LogOut, Fingerprint, User } from "lucide-react";
 import { useOverlayStore, type OverlayState } from "@/lib/overlayStore";
 import { useSettingsStore } from "@/lib/settingsStore";
 import { audit } from "@/lib/auditStore";
@@ -44,18 +44,40 @@ function FocusTrap({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ── Live clock ────────────────────────────────────────────────────────────────
+function useClock() {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
+}
+
 // ── Lock screen ───────────────────────────────────────────────────────────────
 function LockScreen() {
   const [input, setInput]           = useState("");
   const [error, setError]           = useState("");
   const [bioPending, setBioPending] = useState(false);
   const [canBio, setCanBio]         = useState(false);
+  // Two-phase: "idle" shows clock full-screen, "auth" shows the password form
+  const [phase, setPhase]           = useState<"idle" | "auth">("idle");
+  const inputRef                    = useRef<HTMLInputElement>(null);
   const { unlock } = useOverlayStore();
   const verifyPassword = useSettingsStore((s) => s.verifyClassificationPassword);
+  const now = useClock();
+
+  const timeStr = now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false });
+  const dateStr = now.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric" });
 
   // Check if Touch ID is available
   useEffect(() => {
     window.electronAPI?.canBiometric().then((r) => setCanBio(r.available)).catch(() => {});
+  }, []);
+
+  const wakeUp = useCallback(() => {
+    setPhase("auth");
+    setTimeout(() => inputRef.current?.focus(), 120);
   }, []);
 
   const tryUnlock = useCallback(async () => {
@@ -93,84 +115,190 @@ function LockScreen() {
 
   // Auto-prompt Touch ID on mount if available
   useEffect(() => {
-    if (canBio) tryBiometric();
+    if (canBio) {
+      setPhase("auth");
+      tryBiometric();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canBio]);
 
+  // Any keypress on idle phase wakes it up
+  useEffect(() => {
+    if (phase !== "idle") return;
+    const onKey = () => wakeUp();
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [phase, wakeUp]);
+
   return (
     <motion.div
-      className="flex flex-col items-center justify-center gap-6 w-full h-full"
+      className="flex flex-col items-center justify-between w-full h-full select-none"
+      style={{ paddingTop: "10vh", paddingBottom: "8vh" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ delay: 0.3 }}
+      transition={{ duration: 0.5 }}
+      onClick={() => phase === "idle" && wakeUp()}
     >
-      {/* Avatar / lock icon */}
+      {/* ── Clock + date ─────────────────────────────────────────────────── */}
       <motion.div
-        className="w-20 h-20 rounded-full flex items-center justify-center"
-        style={{ background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.12)" }}
-        animate={bioPending ? { boxShadow: ["0 0 0px rgba(212,170,130,0)", "0 0 32px rgba(212,170,130,0.35)", "0 0 0px rgba(212,170,130,0)"] } : {}}
-        transition={{ duration: 1.6, repeat: Infinity }}
+        className="flex flex-col items-center gap-1"
+        animate={phase === "auth" ? { y: -16, scale: 0.88 } : { y: 0, scale: 1 }}
+        transition={{ type: "spring", stiffness: 280, damping: 28 }}
       >
-        <Lock size={32} style={{ color: "#D4AA82" }} />
+        <div
+          className="font-thin tabular-nums leading-none"
+          style={{
+            fontSize: "clamp(72px, 12vw, 128px)",
+            color: "#F4F1EA",
+            letterSpacing: "-0.03em",
+            textShadow: "0 2px 40px rgba(200,169,126,0.18)",
+          }}
+        >
+          {timeStr}
+        </div>
+        <div
+          className="text-base font-light tracking-wide"
+          style={{ color: "rgba(244,241,234,0.55)", letterSpacing: "0.06em" }}
+        >
+          {dateStr}
+        </div>
       </motion.div>
 
-      <div className="text-center">
-        <div className="text-xl font-semibold" style={{ color: "#F4F1EA" }}>strontium.os</div>
-        <div className="text-sm mt-1" style={{ color: "#6A6A7E" }}>
-          {bioPending ? "Waiting for Touch ID…" : "Enter password to unlock"}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-2 w-64">
-        <input
-          autoFocus
-          type="password"
-          value={input}
-          onChange={(e) => { setInput(e.target.value); setError(""); }}
-          onKeyDown={(e) => e.key === "Enter" && tryUnlock()}
-          placeholder="Password"
-          className="os-input px-4 py-2.5 rounded-xl text-sm text-center font-mono"
-          style={{ userSelect: "text" }}
-        />
-        {error && (
+      {/* ── Auth panel ───────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {phase === "auth" && (
           <motion.div
-            initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-            className="text-xs text-center"
-            style={{ color: "#FF5F57" }}
+            key="auth-panel"
+            className="flex flex-col items-center gap-5"
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
-            {error}
+            {/* Avatar */}
+            <motion.div
+              className="flex flex-col items-center gap-2"
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.05, type: "spring", stiffness: 320, damping: 26 }}
+            >
+              <motion.div
+                className="w-20 h-20 rounded-full flex items-center justify-center"
+                style={{
+                  background: "linear-gradient(145deg, rgba(200,169,126,0.12), rgba(200,169,126,0.04))",
+                  border: "1.5px solid rgba(200,169,126,0.22)",
+                  boxShadow: "0 4px 32px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.06)",
+                }}
+                animate={bioPending
+                  ? { boxShadow: ["0 4px 32px rgba(0,0,0,0.4), 0 0 0px rgba(200,169,126,0)", "0 4px 32px rgba(0,0,0,0.4), 0 0 40px rgba(200,169,126,0.35)", "0 4px 32px rgba(0,0,0,0.4), 0 0 0px rgba(200,169,126,0)"] }
+                  : {}}
+                transition={{ duration: 1.6, repeat: Infinity }}
+              >
+                <User size={30} style={{ color: "#C8A97E" }} strokeWidth={1.5} />
+              </motion.div>
+              <div className="text-sm font-medium" style={{ color: "#D4CFC6", letterSpacing: "0.02em" }}>
+                Brian Ndege
+              </div>
+              {bioPending && (
+                <div className="text-xs" style={{ color: "rgba(200,169,126,0.7)" }}>
+                  Waiting for Touch ID…
+                </div>
+              )}
+            </motion.div>
+
+            {/* Password field */}
+            <div className="flex flex-col gap-2.5" style={{ width: 260 }}>
+              <div className="relative">
+                <input
+                  ref={inputRef}
+                  type="password"
+                  value={input}
+                  onChange={(e) => { setInput(e.target.value); setError(""); }}
+                  onKeyDown={(e) => e.key === "Enter" && tryUnlock()}
+                  placeholder="Password"
+                  className="w-full px-4 py-3 rounded-2xl text-sm text-center font-mono outline-none"
+                  style={{
+                    background: "rgba(255,255,255,0.06)",
+                    border: error
+                      ? "1px solid rgba(255,95,87,0.5)"
+                      : "1px solid rgba(255,255,255,0.11)",
+                    color: "#F4F1EA",
+                    backdropFilter: "blur(8px)",
+                    letterSpacing: input ? "0.15em" : "normal",
+                    transition: "border-color 0.2s",
+                  }}
+                />
+              </div>
+
+              <AnimatePresence>
+                {error && (
+                  <motion.div
+                    key="err"
+                    initial={{ opacity: 0, y: -6, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="text-xs text-center"
+                    style={{ color: "#FF5F57" }}
+                  >
+                    {error}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                onClick={tryUnlock}
+                className="py-3 rounded-2xl text-sm font-semibold"
+                style={{
+                  background: "linear-gradient(145deg, rgba(200,169,126,0.18), rgba(200,169,126,0.10))",
+                  border: "1px solid rgba(200,169,126,0.28)",
+                  color: "#D4AA82",
+                  boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
+                }}
+                whileHover={{ scale: 1.02, background: "linear-gradient(145deg, rgba(200,169,126,0.26), rgba(200,169,126,0.16))" }}
+                whileTap={{ scale: 0.97 }}
+              >
+                Unlock
+              </motion.button>
+
+              {canBio && (
+                <motion.button
+                  onClick={tryBiometric}
+                  disabled={bioPending}
+                  className="flex items-center justify-center gap-2 py-2.5 rounded-2xl text-xs"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "1px solid rgba(255,255,255,0.07)",
+                    color: bioPending ? "#C8A97E" : "rgba(200,192,180,0.5)",
+                    opacity: bioPending ? 0.75 : 1,
+                  }}
+                  whileHover={{ opacity: 1 }}
+                  whileTap={{ scale: 0.97 }}
+                >
+                  <Fingerprint size={13} />
+                  {bioPending ? "Authenticating…" : "Use Touch ID"}
+                </motion.button>
+              )}
+            </div>
           </motion.div>
         )}
-        <motion.button
-          onClick={tryUnlock}
-          className="py-2.5 rounded-xl text-sm font-semibold"
-          style={{ background: "rgba(212,170,130,0.14)", border: "1px solid rgba(212,170,130,0.3)", color: "#D4AA82" }}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-        >
-          Unlock
-        </motion.button>
+      </AnimatePresence>
 
-        {/* Touch ID button */}
-        {canBio && (
-          <motion.button
-            onClick={tryBiometric}
-            disabled={bioPending}
-            className="flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm"
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: "1px solid rgba(255,255,255,0.08)",
-              color: bioPending ? "#D4AA82" : "#6A6A7E",
-              opacity: bioPending ? 0.7 : 1,
-            }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.97 }}
+      {/* ── Idle hint ────────────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {phase === "idle" && (
+          <motion.div
+            key="idle-hint"
+            className="text-xs tracking-widest uppercase"
+            style={{ color: "rgba(200,192,180,0.35)", letterSpacing: "0.18em" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
           >
-            <Fingerprint size={14} />
-            {bioPending ? "Authenticating…" : "Use Touch ID"}
-          </motion.button>
+            Press any key to unlock
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </motion.div>
   );
 }
