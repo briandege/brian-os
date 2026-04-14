@@ -42,6 +42,7 @@ const META: Record<AppId, {
   calendar:      { icon: <CalendarDays size={18} strokeWidth={1.5}/>,color: "#5AC8FA", bg: "linear-gradient(145deg,#0A1520,#0E2030)", desc: "Monthly calendar with events",                  tags: ["calendar","events","schedule","date"]},
   mediaplayer:   { icon: <Music2 size={18} strokeWidth={1.5} />,     color: "#B48EAD", bg: "linear-gradient(145deg,#18101E,#22162A)", desc: "Audio & video player with visualizer",          tags: ["music","audio","video","media","player"]},
   clipboard:     { icon: <Clipboard size={18} strokeWidth={1.5} />,  color: "#9A9A8A", bg: "linear-gradient(145deg,#141414,#1E1E1E)", desc: "Clipboard history manager with search & pin",   tags: ["clipboard","copy","paste","history"] },
+  compliance:    { icon: <Shield size={18} strokeWidth={1.5} />,    color: "#C8A97E", bg: "linear-gradient(145deg,#1E180A,#2A2010)", desc: "GDPR Art. 51/52 independent supervisory monitor",  tags: ["gdpr","compliance","audit","privacy","security"] },
 };
 
 // ── Search ────────────────────────────────────────────────────────────────────

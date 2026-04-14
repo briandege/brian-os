@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Power, Moon, RotateCcw, Lock, LogOut, Fingerprint } from "lucide-react";
 import { useOverlayStore, type OverlayState } from "@/lib/overlayStore";
 import { useSettingsStore } from "@/lib/settingsStore";
+import { audit } from "@/lib/auditStore";
 
 // ── Focus trap ────────────────────────────────────────────────────────────────
 function FocusTrap({ children }: { children: React.ReactNode }) {
@@ -60,8 +61,10 @@ function LockScreen() {
   const tryUnlock = useCallback(async () => {
     const ok = await verifyPassword(input);
     if (ok) {
+      audit({ category: "auth", severity: "info", action: "Unlock succeeded (password)", module: "LockScreen" });
       unlock();
     } else {
+      audit({ category: "auth", severity: "warning", action: "Unlock failed — incorrect password", module: "LockScreen" });
       setError("Incorrect password");
       setInput("");
     }
@@ -74,11 +77,14 @@ function LockScreen() {
     try {
       const result = await window.electronAPI.biometricAuth();
       if (result.ok) {
+        audit({ category: "auth", severity: "info", action: "Unlock succeeded (Touch ID / biometric)", module: "LockScreen" });
         unlock();
       } else {
+        audit({ category: "auth", severity: "warning", action: `Biometric auth failed: ${result.error}`, module: "LockScreen" });
         setError(result.error ?? "Authentication failed");
       }
     } catch {
+      audit({ category: "auth", severity: "warning", action: "Biometric auth exception", module: "LockScreen" });
       setError("Biometric authentication failed");
     } finally {
       setBioPending(false);
@@ -258,7 +264,10 @@ export default function StartScreen() {
   // Lock on system wake (sleep resume) sent from main process
   useEffect(() => {
     if (typeof window === "undefined" || !window.electronAPI?.onSystemLock) return;
-    const unsub = window.electronAPI.onSystemLock(() => lock());
+    const unsub = window.electronAPI.onSystemLock(() => {
+      audit({ category: "auth", severity: "info", action: "Screen locked (system wake / resume)", module: "StartScreen" });
+      lock();
+    });
     return unsub;
   }, [lock]);
 

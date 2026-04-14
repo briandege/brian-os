@@ -12,19 +12,25 @@ function formatDate(iso: string) {
     d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
 }
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 // Very simple markdown renderer (bold, italic, headers, code, links)
 function renderMarkdown(md: string) {
   const lines = md.split("\n");
   return lines.map((line, i) => {
-    // Headers
+    // Headers (render as React elements — no dangerouslySetInnerHTML needed)
     if (line.startsWith("### ")) return <h3 key={i} className="text-[14px] font-bold mt-3 mb-1" style={{ color: ACCENT }}>{line.slice(4)}</h3>;
     if (line.startsWith("## ")) return <h2 key={i} className="text-[16px] font-bold mt-3 mb-1" style={{ color: ACCENT }}>{line.slice(3)}</h2>;
     if (line.startsWith("# ")) return <h1 key={i} className="text-[18px] font-bold mt-3 mb-1" style={{ color: ACCENT }}>{line.slice(2)}</h1>;
     // Code block line
     if (line.startsWith("```")) return <div key={i} className="h-px" />;
 
-    // Inline formatting
-    const html = line
+    if (!line.trim()) return <div key={i} className="h-2" />;
+
+    // Escape HTML first, then apply safe markdown substitutions
+    const html = escapeHtml(line)
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/\*(.+?)\*/g, "<em>$1</em>")
       .replace(/`(.+?)`/g, '<code class="px-1 py-0.5 rounded text-[11px]" style="background:rgba(200,169,126,0.1);color:#C8A97E">$1</code>')
@@ -33,7 +39,6 @@ function renderMarkdown(md: string) {
         return `<a href="${safe}" style="color:#C8A97E;text-decoration:underline">${text}</a>`;
       });
 
-    if (!line.trim()) return <div key={i} className="h-2" />;
     return <p key={i} className="text-[12px] leading-relaxed" style={{ color: "rgba(255,255,255,0.7)" }} dangerouslySetInnerHTML={{ __html: html }} />;
   });
 }

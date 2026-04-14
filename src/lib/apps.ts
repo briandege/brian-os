@@ -155,6 +155,13 @@ export const APP_REGISTRY: AppDefinition[] = [
     defaultSize: { width: 360, height: 520 },
     minSize: { width: 300, height: 400 },
   },
+  {
+    id: "compliance",
+    label: "Compliance",
+    icon: "Shield",
+    defaultSize: { width: 780, height: 580 },
+    minSize: { width: 600, height: 440 },
+  },
 ];
 
 export function getApp(id: string): AppDefinition | undefined {

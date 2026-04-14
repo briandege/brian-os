@@ -24,6 +24,19 @@
 /* ── Reset ────────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  /* Animation speed multiplier: fast=0.5 normal=1 slow=2 — set by SettingsProvider */
+  --anim-speed: 1;
+}
+
+/* Reduce motion: disable transitions/animations when data-reduce-motion="true" */
+html[data-reduce-motion="true"] *,
+html[data-reduce-motion="true"] *::before,
+html[data-reduce-motion="true"] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
 html, body {
   width: 100%; height: 100%;
   min-height: 100dvh;

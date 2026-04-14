@@ -70,6 +70,21 @@ export default function MediaPlayerApp() {
     if (audio) audio.volume = muted ? 0 : volume;
   }, [volume, muted]);
 
+  const nextTrack = useCallback(() => {
+    if (tracks.length === 0) return;
+    if (shuffle) {
+      const next = Math.floor(Math.random() * tracks.length);
+      playTrack(next);
+    } else {
+      const next = (currentIdx + 1) % tracks.length;
+      if (next === 0 && repeatMode === "none") {
+        setPlaying(false);
+      } else {
+        playTrack(next);
+      }
+    }
+  }, [tracks.length, currentIdx, shuffle, repeatMode, playTrack]);
+
   // Time update
   useEffect(() => {
     const audio = audioRef.current;
@@ -92,22 +107,7 @@ export default function MediaPlayerApp() {
       audio.removeEventListener("loadedmetadata", onDur);
       audio.removeEventListener("ended", onEnd);
     };
-  }, [repeatMode, tracks.length, currentIdx, shuffle]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const nextTrack = useCallback(() => {
-    if (tracks.length === 0) return;
-    if (shuffle) {
-      const next = Math.floor(Math.random() * tracks.length);
-      playTrack(next);
-    } else {
-      const next = (currentIdx + 1) % tracks.length;
-      if (next === 0 && repeatMode === "none") {
-        setPlaying(false);
-      } else {
-        playTrack(next);
-      }
-    }
-  }, [tracks.length, currentIdx, shuffle, repeatMode, playTrack]);
+  }, [repeatMode, nextTrack]);
 
   const prevTrack = useCallback(() => {
     if (tracks.length === 0) return;

@@ -27,13 +27,14 @@ import FilesApp from "@/components/apps/FilesApp";
 import CalendarApp from "@/components/apps/CalendarApp";
 import MediaPlayerApp from "@/components/apps/MediaPlayerApp";
 import ClipboardApp from "@/components/apps/ClipboardApp";
+import ComplianceApp from "@/components/apps/ComplianceApp";
 import Spotlight from "@/components/spotlight/Spotlight";
 import NotificationToast from "@/components/notifications/NotificationToast";
 import StartScreen from "@/components/overlays/StartScreen";
 import MissionControl from "@/components/mission-control/MissionControl";
 import AppSwitcher from "@/components/app-switcher/AppSwitcher";
 import NewsTicker from "@/components/desktop/NewsTicker";
-import { useSettingsStore, applyAccent, applyColorScheme, CLASSIFICATION_CONFIG, type ClassificationLevel } from "@/lib/settingsStore";
+import { useSettingsStore, CLASSIFICATION_CONFIG, type ClassificationLevel } from "@/lib/settingsStore";
 import { useHealthStore } from "@/lib/healthStore";
 import { useUpdateStore } from "@/lib/updateStore";
 import { notify } from "@/lib/notificationStore";
@@ -63,6 +64,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "calendar":      return <CalendarApp />;
     case "mediaplayer":   return <MediaPlayerApp />;
     case "clipboard":     return <ClipboardApp />;
+    case "compliance":    return <ComplianceApp />;
   }
 }
 
@@ -75,15 +77,10 @@ export default function Desktop() {
   const [missionControlOpen, setMissionControl] = useState(false);
   const [switcherOpen, setSwitcherOpen]         = useState(false);
   const [switcherIdx, setSwitcherIdx]           = useState(0);
-  const accent = useSettingsStore((s) => s.accent);
-  const colorScheme = useSettingsStore((s) => s.colorScheme);
   const classificationLevel = useSettingsStore((s) => s.classificationLevel);
   const showBanners = classificationLevel !== "none";
 
   const cmdHeld = useRef(false);
-
-  // Apply accent color + color scheme
-  useEffect(() => { applyAccent(accent); applyColorScheme(colorScheme); }, [accent, colorScheme]);
 
   // Health tick — increment uptime every second
   useEffect(() => {

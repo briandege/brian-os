@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import BootSequence from "@/components/boot/BootSequence";
 import Desktop from "@/components/desktop/Desktop";
 import { useWindowStore } from "@/lib/windowStore";
-import { useSettingsStore } from "@/lib/settingsStore";
+import { useSettingsStore, applyAllSettings } from "@/lib/settingsStore";
 
 function WelcomeOverlay({ onEnter }: { onEnter: () => void }) {
   useEffect(() => {
@@ -116,7 +116,16 @@ type Phase = "boot" | "welcome" | "desktop";
 export default function Home() {
   const [phase, setPhase] = useState<Phase>("boot");
   const { open } = useWindowStore();
-  const startupApps = useSettingsStore((s) => s.startupApps);
+  const startupApps   = useSettingsStore((s) => s.startupApps);
+  const accent        = useSettingsStore((s) => s.accent);
+  const colorScheme   = useSettingsStore((s) => s.colorScheme);
+  const animationSpeed = useSettingsStore((s) => s.animationSpeed);
+  const reduceMotion  = useSettingsStore((s) => s.reduceMotion);
+
+  // Apply all CSS-affecting settings to document root immediately — runs before any child renders
+  useEffect(() => {
+    applyAllSettings({ accent, colorScheme, animationSpeed, reduceMotion });
+  }, [accent, colorScheme, animationSpeed, reduceMotion]);
 
   const handleBootComplete = useCallback(() => setPhase("welcome"), []);
 

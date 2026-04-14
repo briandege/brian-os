@@ -62,7 +62,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
   if (stored.includes(SEPARATOR)) {
     // New PBKDF2 format
     const [saltHex, hashHex] = stored.split(SEPARATOR);
-    const salt        = fromHex(saltHex);
+    const saltBytes   = fromHex(saltHex);
     const keyMaterial = await crypto.subtle.importKey(
       "raw",
       new TextEncoder().encode(password),
@@ -71,7 +71,7 @@ export async function verifyPassword(password: string, stored: string): Promise<
       ["deriveBits"],
     );
     const derived = await crypto.subtle.deriveBits(
-      { name: "PBKDF2", salt: fromHex(saltHex).buffer as ArrayBuffer, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
+      { name: "PBKDF2", salt: saltBytes.buffer as ArrayBuffer, iterations: PBKDF2_ITERATIONS, hash: "SHA-256" },
       keyMaterial,
       KEY_BITS,
     );

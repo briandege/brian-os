@@ -367,7 +367,7 @@ const ok = await verifyPassword("admin", hash);  // true
 
 The default password `admin` is bootstrapped as a SHA-256 hash:
 ```
-bec0e4b5194587d3eb5dbc835fe4468ed15c1b209ac94205c408b07bfc65f98c
+8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918
 ```
 This auto-upgrades to PBKDF2 format on first password change via Settings → Security.
 

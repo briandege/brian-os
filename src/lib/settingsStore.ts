@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { AppId } from "@/types";
 import { hashPassword, verifyPassword } from "@/lib/crypto";
+import { audit } from "@/lib/auditStore";
 
 export type AccentColor = "tan" | "blue" | "purple" | "green" | "red";
 export type WallpaperStyle = "grid" | "dots" | "noise" | "none";
@@ -124,8 +125,8 @@ export const useSettingsStore = create<SettingsState>()(
       colorScheme:            "dark",
       doNotDisturb:           false,
       classificationLevel: "top-secret",
-      // SHA-256("strontium.os::v1::admin") — default password is "admin"
-      classificationPasswordHash: "bec0e4b5194587d3eb5dbc835fe4468ed15c1b209ac94205c408b07bfc65f98c",
+      // SHA-256("admin") — default password is "admin"
+      classificationPasswordHash: "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
 
       setAccent:                  (accent)               => set({ accent }),
       setWallpaper:               (wallpaper)            => set({ wallpaper }),
@@ -144,9 +145,13 @@ export const useSettingsStore = create<SettingsState>()(
       setAnimationSpeed:          (animationSpeed)       => set({ animationSpeed }),
       setColorScheme:             (colorScheme)          => set({ colorScheme }),
       setDoNotDisturb:            (doNotDisturb)         => set({ doNotDisturb }),
-      setClassificationLevel:     (classificationLevel)  => set({ classificationLevel }),
+      setClassificationLevel: (classificationLevel) => {
+        audit({ category: "security", severity: "warning", action: `Classification level changed to: ${classificationLevel}`, module: "SettingsStore" });
+        set({ classificationLevel });
+      },
       setClassificationPassword:  async (plaintext) => {
         const classificationPasswordHash = await hashPassword(plaintext);
+        audit({ category: "security", severity: "critical", action: "System password changed", module: "SettingsStore" });
         set({ classificationPasswordHash });
       },
       verifyClassificationPassword: async (attempt: string): Promise<boolean> => {
@@ -154,7 +159,17 @@ export const useSettingsStore = create<SettingsState>()(
         return verifyPassword(attempt, hash);
       },
     }),
-    { name: "strontium-settings" }
+    {
+      name: "strontium-settings",
+      // Migrate stale hash: if the old incorrect default was stored, reset to the correct one
+      onRehydrateStorage: () => (state) => {
+        const WRONG_HASH = "bec0e4b5194587d3eb5dbc835fe4468ed15c1b209ac94205c408b07bfc65f98c";
+        const CORRECT_HASH = "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918";
+        if (state && state.classificationPasswordHash === WRONG_HASH) {
+          state.classificationPasswordHash = CORRECT_HASH;
+        }
+      },
+    }
   )
 );
 
@@ -171,6 +186,30 @@ export function applyAccent(accent: AccentColor) {
 // Apply color scheme on :root
 export function applyColorScheme(scheme: "dark" | "light") {
   document.documentElement.setAttribute("data-theme", scheme);
+}
+
+// Apply animation speed as CSS variable on :root
+export function applyAnimationSpeed(speed: AnimationSpeed) {
+  const multipliers: Record<AnimationSpeed, string> = { fast: "0.5", normal: "1", slow: "2" };
+  document.documentElement.style.setProperty("--anim-speed", multipliers[speed]);
+}
+
+// Apply reduce motion preference on :root
+export function applyReduceMotion(reduce: boolean) {
+  document.documentElement.setAttribute("data-reduce-motion", reduce ? "true" : "false");
+}
+
+/** Apply all CSS-affecting settings at once — call on app init and after rehydration */
+export function applyAllSettings(s: {
+  accent: AccentColor;
+  colorScheme: "dark" | "light";
+  animationSpeed: AnimationSpeed;
+  reduceMotion: boolean;
+}) {
+  applyAccent(s.accent);
+  applyColorScheme(s.colorScheme);
+  applyAnimationSpeed(s.animationSpeed);
+  applyReduceMotion(s.reduceMotion);
 }
 
 function hexToRgba(hex: string, alpha: number) {

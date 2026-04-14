@@ -20,7 +20,8 @@ export type AppId =
   | "files"
   | "calendar"
   | "mediaplayer"
-  | "clipboard";
+  | "clipboard"
+  | "compliance";
 
 export interface AppDefinition {
   id: AppId;

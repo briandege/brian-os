@@ -2,6 +2,7 @@
 import { create } from "zustand";
 import type { WindowState, AppId } from "@/types";
 import { getApp } from "@/lib/apps";
+import { audit } from "@/lib/auditStore";
 
 let nextZ = 10;
 let instanceCounter = 0;
@@ -61,10 +62,13 @@ export const useWindowStore = create<WindowStore>((set, get) => ({
       zIndex: ++nextZ,
     };
     set((s) => ({ windows: [...s.windows, win], focusedId: id }));
+    audit({ category: "app", severity: "info", action: `Opened: ${app.label}`, module: "WindowStore", detail: `appId=${appId}` });
   },
 
   close(instanceId) {
     set((s) => {
+      const closing = s.windows.find((w) => w.instanceId === instanceId);
+      if (closing) audit({ category: "app", severity: "info", action: `Closed: ${closing.title}`, module: "WindowStore", detail: `appId=${closing.appId}` });
       const remaining = s.windows.filter((w) => w.instanceId !== instanceId);
       const newFocus = remaining.length
         ? [...remaining].sort((a, b) => b.zIndex - a.zIndex)[0].instanceId
