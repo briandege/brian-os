@@ -21,7 +21,8 @@ export type AppId =
   | "calendar"
   | "mediaplayer"
   | "clipboard"
-  | "compliance";
+  | "compliance"
+  | "axira-showcase";
 
 export interface AppDefinition {
   id: AppId;

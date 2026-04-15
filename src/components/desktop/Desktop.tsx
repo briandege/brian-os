@@ -28,6 +28,9 @@ import CalendarApp from "@/components/apps/CalendarApp";
 import MediaPlayerApp from "@/components/apps/MediaPlayerApp";
 import ClipboardApp from "@/components/apps/ClipboardApp";
 import ComplianceApp from "@/components/apps/ComplianceApp";
+import AxiraShowcaseApp from "@/components/apps/AxiraShowcaseApp";
+import NewsWidget from "@/components/desktop/NewsWidget";
+import PanicOverlay from "@/components/overlays/PanicOverlay";
 import Spotlight from "@/components/spotlight/Spotlight";
 import NotificationToast from "@/components/notifications/NotificationToast";
 import StartScreen from "@/components/overlays/StartScreen";
@@ -65,6 +68,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "mediaplayer":   return <MediaPlayerApp />;
     case "clipboard":     return <ClipboardApp />;
     case "compliance":    return <ComplianceApp />;
+    case "axira-showcase": return <AxiraShowcaseApp />;
   }
 }
 
@@ -190,6 +194,7 @@ export default function Desktop() {
     { label: "Mission Control  F3",action: () => setMissionControl(true) },
     { label: "Open Terminal",      action: () => open("terminal") },
     { label: "Open AxiraNews",     action: () => open("axira") },
+    { label: "AxiraNews Showcase", action: () => open("axira-showcase") },
     { label: "About Brian",        action: () => open("about") },
     { label: "View Projects",      action: () => open("projects") },
     { label: "Open Notebook",      action: () => open("notebook") },
@@ -303,6 +308,7 @@ export default function Desktop() {
       />
       <NotificationToast />
       <NewsTicker />
+      <NewsWidget />
 
       {/* ── Classification Banners ───────────────────────────────────────── */}
       {showBanners && <ClassificationBanner position="top"    level={classificationLevel} />}
@@ -310,6 +316,7 @@ export default function Desktop() {
 
       {/* ── System Overlays (lock screen, power menu, transitions) ───────── */}
       <StartScreen />
+      <PanicOverlay />
     </div>
   );
 }

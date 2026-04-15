@@ -124,6 +124,98 @@ export async function checkHealth(): Promise<BackendHealth> {
   };
 }
 
+// ── Auth ─────────────────────────────────────────────────────────────────────
+export async function loginWithCredentials(
+  clientId: string,
+  clientSecret: string,
+): Promise<{ token: string; expiresAt: number } | null> {
+  const res = await apiFetch<{ token: string; expiresIn: number }>(
+    "/v1/auth/token",
+    {
+      method: "POST",
+      body: JSON.stringify({ clientId, clientSecret }),
+    },
+    8000,
+  );
+  if (!res?.token) return null;
+  return { token: res.token, expiresAt: Date.now() + res.expiresIn * 1000 };
+}
+
+// ── Personalized feed ────────────────────────────────────────────────────────
+export async function fetchPersonalizedNews(
+  params: { userId: string; limit?: number; category?: string },
+  token: string,
+): Promise<AxiraArticle[]> {
+  const qs = new URLSearchParams({ userId: params.userId });
+  if (params.limit)    qs.set("limit",    String(params.limit));
+  if (params.category) qs.set("category", params.category);
+
+  const result = await apiFetch<{ articles?: AxiraArticle[]; data?: AxiraArticle[] }>(
+    `/v1/news?${qs}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  return result?.articles ?? result?.data ?? [];
+}
+
+// ── Nearby ───────────────────────────────────────────────────────────────────
+export async function fetchNearby(
+  lat: number,
+  lon: number,
+  limit = 10,
+): Promise<AxiraArticle[]> {
+  const result = await apiFetch<{ articles?: AxiraArticle[]; data?: AxiraArticle[] }>(
+    `/v1/news/nearby?lat=${lat}&lon=${lon}&limit=${limit}`,
+  );
+  return result?.articles ?? result?.data ?? [];
+}
+
+// ── Engagement events ────────────────────────────────────────────────────────
+export type EngagementEvent = {
+  articleId: string;
+  eventType: "impression" | "click" | "dwell" | "like" | "save";
+  dwellMs?: number;
+  category?: string;
+  sourceType?: string;
+  country?: string;
+  userId?: string;
+};
+
+export async function postEngagementEvents(
+  events: EngagementEvent[],
+  token?: string,
+): Promise<boolean> {
+  const res = await apiFetch<unknown>(
+    "/v1/events",
+    {
+      method: "POST",
+      body: JSON.stringify({ events }),
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    },
+  );
+  return res !== null;
+}
+
+// ── Backend stats (for showcase) ─────────────────────────────────────────────
+export type BackendStats = {
+  totalArticles: number;
+  byCategory: Record<string, number>;
+  sources: number;
+};
+
+export async function fetchStats(): Promise<BackendStats | null> {
+  // Derive stats from a news fetch since there's no dedicated stats endpoint
+  const articles = await fetchNews({ limit: 100 });
+  if (!articles.length) return null;
+
+  const byCategory: Record<string, number> = {};
+  const sources = new Set<string>();
+  for (const a of articles) {
+    byCategory[a.category] = (byCategory[a.category] ?? 0) + 1;
+    sources.add(a.source);
+  }
+  return { totalArticles: articles.length, byCategory, sources: sources.size };
+}
+
 // ── Admin ────────────────────────────────────────────────────────────────────
 export async function triggerIngest(token?: string): Promise<boolean> {
   const res = await apiFetch<unknown>(
@@ -133,6 +225,23 @@ export async function triggerIngest(token?: string): Promise<boolean> {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
     },
     15000,
+  );
+  return res !== null;
+}
+
+// ── Security alert ───────────────────────────────────────────────────────────
+export async function notifySecurityAlert(payload: {
+  event: string;
+  severity?: "low" | "medium" | "high" | "critical";
+  source?: string;
+}): Promise<boolean> {
+  const res = await apiFetch<unknown>(
+    "/v1/security/alert",
+    {
+      method: "POST",
+      body: JSON.stringify({ ...payload, timestamp: new Date().toISOString() }),
+    },
+    6000,
   );
   return res !== null;
 }

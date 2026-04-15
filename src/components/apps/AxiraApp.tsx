@@ -1,12 +1,15 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ExternalLink, RefreshCw, Wifi, WifiOff, ChevronDown, Search } from "lucide-react";
+import { ExternalLink, RefreshCw, Wifi, WifiOff, ChevronDown, Search, KeyRound, User } from "lucide-react";
 import {
-  fetchNews, fetchTopHeadlines, searchNews,
-  type AxiraArticle, relativeTime, AXIRA_BASE,
+  fetchNews, fetchTopHeadlines, searchNews, fetchPersonalizedNews,
+  postEngagementEvents,
+  type AxiraArticle, type EngagementEvent, relativeTime, AXIRA_BASE,
 } from "@/lib/axiraClient";
+import { useAuthStore, isAuthed, getToken, getSessionId } from "@/lib/authStore";
 import { notify } from "@/lib/notificationStore";
+import AuthModal from "@/components/overlays/AuthModal";
 
 const CATEGORY_COLOR: Record<string, string> = {
   Cybersecurity: "#FF5F57",
@@ -32,6 +35,34 @@ const FALLBACK: AxiraArticle[] = [
   { id: "f5", title: "G7 Nations Agree on AI Governance Framework", source: "Reuters", category: "Global", publishedAt: new Date(Date.now() - 7200000).toISOString() },
 ];
 
+// Batch engagement events and flush every 20s or when 25 are queued
+function useEngagementTracker() {
+  const queueRef = useRef<EngagementEvent[]>([]);
+
+  const flush = useCallback(() => {
+    if (queueRef.current.length === 0) return;
+    const batch = queueRef.current.splice(0);
+    const token = getToken() ?? undefined;
+    postEngagementEvents(batch, token).catch(() => {/* fire-and-forget */});
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(flush, 20_000);
+    return () => { clearInterval(id); flush(); };
+  }, [flush]);
+
+  const track = useCallback((event: EngagementEvent) => {
+    const sessionId = getSessionId();
+    queueRef.current.push({
+      ...event,
+      userId: event.userId ?? (isAuthed() ? undefined : `session:${sessionId}`),
+    });
+    if (queueRef.current.length >= 25) flush();
+  }, [flush]);
+
+  return track;
+}
+
 export default function AxiraApp() {
   const [articles, setArticles]     = useState<AxiraArticle[]>([]);
   const [headlines, setHeadlines]   = useState<AxiraArticle[]>([]);
@@ -42,18 +73,37 @@ export default function AxiraApp() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [query, setQuery]           = useState("");
   const [searching, setSearching]   = useState(false);
+  const [authOpen, setAuthOpen]     = useState(false);
+
+  const { token } = useAuthStore();
+  const authed = isAuthed();
+  const track = useEngagementTracker();
+
+  // Track article impression on expand
+  const handleExpand = useCallback((article: AxiraArticle) => {
+    const next = expandedId === article.id ? null : article.id;
+    setExpandedId(next);
+    if (next) {
+      track({ articleId: article.id, eventType: "click", category: article.category, sourceType: article.source });
+    }
+  }, [expandedId, track]);
 
   const load = useCallback(async () => {
     setLoading(true);
+    const t = getToken();
+
     const [news, heads] = await Promise.all([
-      fetchNews({ limit: 30 }),
+      authed && t
+        ? fetchPersonalizedNews({ userId: "web-user", limit: 30 }, t)
+        : fetchNews({ limit: 30 }),
       fetchTopHeadlines(8),
     ]);
+
     if (news.length > 0) {
       setArticles(news);
       setHeadlines(heads.length > 0 ? heads : news.slice(0, 6));
       setOnline(true);
-      notify("AxiraNews", `${news.length} articles loaded`, "success", "axira");
+      notify("AxiraNews", `${news.length} articles loaded${authed ? " · personalised" : ""}`, "success", "axira");
     } else {
       setArticles(FALLBACK);
       setHeadlines(FALLBACK);
@@ -61,9 +111,16 @@ export default function AxiraApp() {
       notify("AxiraNews", "Backend offline — showing cached feed", "warning", "axira");
     }
     setLoading(false);
-  }, []);
+  }, [authed, token]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { load(); }, [load]);
+
+  // Track impressions for visible articles
+  useEffect(() => {
+    articles.slice(0, 10).forEach(a => {
+      track({ articleId: a.id, eventType: "impression", category: a.category, sourceType: a.source });
+    });
+  }, [articles]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Advance ticker
   useEffect(() => {
@@ -110,9 +167,30 @@ export default function AxiraApp() {
             ) : (
               <><WifiOff size={10} style={{ color: "#FF5F57" }} /><span className="text-[10px] font-mono" style={{ color: "#FF5F57" }}>OFFLINE · cached</span></>
             )}
+            {authed && (
+              <span className="text-[10px] font-mono ml-1" style={{ color: "#B48EAD" }}>· personalised</span>
+            )}
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Auth button */}
+          <motion.button
+            onClick={() => setAuthOpen(true)}
+            className="p-1.5 rounded-lg flex items-center gap-1.5"
+            style={{
+              background: authed ? "rgba(180,142,173,0.1)" : "rgba(212,184,150,0.06)",
+              color: authed ? "#B48EAD" : "#6B6B6B",
+              border: authed ? "1px solid rgba(180,142,173,0.2)" : "1px solid transparent",
+            }}
+            whileTap={{ scale: 0.94 }}
+            title={authed ? "Signed in · click to manage" : "Sign in for personalised feed"}
+          >
+            {authed ? <User size={12} /> : <KeyRound size={12} />}
+            <span className="text-[10px] font-mono hidden sm:inline">
+              {authed ? "signed in" : "sign in"}
+            </span>
+          </motion.button>
+
           <motion.button
             onClick={load}
             className="p-1.5 rounded-lg"
@@ -208,7 +286,9 @@ export default function AxiraApp() {
         {loading ? (
           <div className="flex items-center justify-center h-32 gap-3">
             <div className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: "#D4B896" }} />
-            <span className="text-xs font-mono" style={{ color: "#4A4A4A" }}>Fetching from AxiraNews…</span>
+            <span className="text-xs font-mono" style={{ color: "#4A4A4A" }}>
+              {authed ? "Fetching personalised feed…" : "Fetching from AxiraNews…"}
+            </span>
           </div>
         ) : (
           <AnimatePresence mode="popLayout">
@@ -225,7 +305,7 @@ export default function AxiraApp() {
                   transition={{ delay: i * 0.03 }}
                   className="cursor-pointer"
                   style={{ borderBottom: "1px solid #151515" }}
-                  onClick={() => setExpandedId(isExpanded ? null : article.id)}
+                  onClick={() => handleExpand(article)}
                   onMouseEnter={e => (e.currentTarget.style.background = "#111111")}
                   onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
                 >
@@ -297,6 +377,9 @@ export default function AxiraApp() {
           </AnimatePresence>
         )}
       </div>
+
+      {/* Auth modal */}
+      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </div>
   );
 }

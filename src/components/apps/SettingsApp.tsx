@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Palette, Monitor, Rocket, Info, ChevronRight,
   Check, RotateCcw, TerminalSquare, Keyboard, Shield, Eye, EyeOff, Lock,
+  ShieldAlert, TriangleAlert,
 } from "lucide-react";
+import { usePanicStore } from "@/lib/panicStore";
 import {
   useSettingsStore, applyAccent,
   ACCENT_PALETTE, TERMINAL_THEMES, CLASSIFICATION_CONFIG,
@@ -189,12 +191,15 @@ export default function SettingsApp() {
 
         {/* ── Security ── */}
         {section === "security" && (
-          <SecuritySection
-            level={classificationLevel}
-            onLevelChange={setClassificationLevel}
-            onPasswordChange={setClassificationPassword}
-            verifyPassword={verifyClassificationPassword}
-          />
+          <>
+            <SecuritySection
+              level={classificationLevel}
+              onLevelChange={setClassificationLevel}
+              onPasswordChange={setClassificationPassword}
+              verifyPassword={verifyClassificationPassword}
+            />
+            <PanicLockdownSection />
+          </>
         )}
 
         {/* ── Terminal ── */}
@@ -676,6 +681,143 @@ function SecuritySection({
         </div>
       </Section>
     </>
+  );
+}
+
+// ── Panic & Lockdown Section ────────────────────────────────────────────────
+
+function PanicLockdownSection() {
+  const initiate = usePanicStore((s) => s.initiate);
+  const [armed, setArmed]       = useState(false);
+  const [holdProgress, setHold] = useState(0);
+  const holdRef                 = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Hold-to-confirm: hold the button for 2 seconds to trigger
+  const startHold = () => {
+    if (!armed) return;
+    holdRef.current = setInterval(() => {
+      setHold(p => {
+        if (p >= 100) {
+          clearInterval(holdRef.current!);
+          setHold(0);
+          setArmed(false);
+          initiate();
+          return 0;
+        }
+        return p + 5;
+      });
+    }, 100);
+  };
+
+  const endHold = () => {
+    if (holdRef.current) clearInterval(holdRef.current);
+    setHold(0);
+  };
+
+  return (
+    <Section title="Emergency Lockdown">
+      {/* Warning card */}
+      <div
+        className="rounded-xl overflow-hidden"
+        style={{ border: "1px solid rgba(255,40,40,0.2)", background: "rgba(255,20,20,0.04)" }}
+      >
+        {/* Header */}
+        <div
+          className="flex items-center gap-2.5 px-4 py-3"
+          style={{ borderBottom: "1px solid rgba(255,40,40,0.12)", background: "rgba(255,20,20,0.06)" }}
+        >
+          <ShieldAlert size={14} style={{ color: "#FF3030" }} />
+          <span className="text-[12px] font-semibold" style={{ color: "#FF4040" }}>
+            Panic &amp; Lockdown
+          </span>
+          <span
+            className="ml-auto text-[9px] font-bold font-mono px-2 py-0.5 rounded tracking-widest"
+            style={{ background: "rgba(255,40,40,0.15)", color: "#FF4040", border: "1px solid rgba(255,40,40,0.25)" }}
+          >
+            DANGER ZONE
+          </span>
+        </div>
+
+        {/* Body */}
+        <div className="px-4 py-4 space-y-3">
+          <p className="text-[11px] leading-relaxed" style={{ color: "#6A6A76" }}>
+            Immediately executes a full system lockdown. The following actions are performed in sequence:
+          </p>
+          <ul className="space-y-1.5">
+            {[
+              "POST critical alert to the AxiraNews security backend",
+              "Close all open application windows",
+              "Elevate classification to TOP SECRET",
+              "Lock the screen — password required to re-enter",
+            ].map((item, i) => (
+              <li key={i} className="flex items-start gap-2 text-[11px]" style={{ color: "#4A4A56" }}>
+                <span style={{ color: "rgba(255,40,40,0.4)" }} className="shrink-0 mt-0.5">▸</span>
+                {item}
+              </li>
+            ))}
+          </ul>
+
+          {/* Arm toggle */}
+          <div
+            className="flex items-center justify-between px-3 py-2.5 rounded-lg mt-2"
+            style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}
+          >
+            <div className="flex items-center gap-2">
+              <TriangleAlert size={12} style={{ color: armed ? "#FF4040" : "#3A3A42" }} />
+              <span className="text-[11px] font-medium" style={{ color: armed ? "#FF6060" : "#4A4A56" }}>
+                {armed ? "Armed — hold button to execute" : "Arm lockdown"}
+              </span>
+            </div>
+            <Toggle value={armed} onChange={setArmed} />
+          </div>
+
+          {/* Hold-to-trigger button */}
+          <AnimatePresence>
+            {armed && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="relative overflow-hidden rounded-xl"
+              >
+                {/* Progress fill */}
+                <motion.div
+                  className="absolute inset-0 origin-left"
+                  style={{
+                    background: "rgba(255,40,40,0.18)",
+                    scaleX: holdProgress / 100,
+                    transformOrigin: "left",
+                  }}
+                />
+                <motion.button
+                  className="relative w-full flex items-center justify-center gap-2.5 py-3 rounded-xl text-sm font-bold tracking-widest uppercase font-mono"
+                  style={{
+                    background: "transparent",
+                    border: `1px solid rgba(255,40,40,${0.3 + holdProgress / 200})`,
+                    color: holdProgress > 0 ? "#FF2020" : "#FF4040",
+                    textShadow: holdProgress > 50 ? "0 0 20px rgba(255,32,32,0.6)" : "none",
+                    cursor: "pointer",
+                  }}
+                  onMouseDown={startHold}
+                  onMouseUp={endHold}
+                  onMouseLeave={endHold}
+                  onTouchStart={startHold}
+                  onTouchEnd={endHold}
+                  animate={holdProgress > 0 ? { opacity: [1, 0.85, 1] } : {}}
+                  transition={{ duration: 0.3, repeat: Infinity }}
+                >
+                  <ShieldAlert size={15} />
+                  {holdProgress > 0
+                    ? `INITIATING… ${Math.round(holdProgress)}%`
+                    : "HOLD TO INITIATE LOCKDOWN"
+                  }
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </Section>
   );
 }
 
