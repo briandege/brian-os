@@ -6,7 +6,7 @@ import {
   Activity, Database, Mail, FileText, BookOpen, Zap,
   Globe, Settings, Atom, Shield, X, CornerDownLeft,
   ArrowUp, ArrowDown, Hash, Bot, PenSquare,
-  Calculator, FileEdit, CalendarDays, Music2, Clipboard, Star,
+  Calculator, FileEdit, CalendarDays, Music2, Clipboard, Star, Command,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import { APP_REGISTRY } from "@/lib/apps";
@@ -43,7 +43,8 @@ const META: Record<AppId, {
   mediaplayer:   { icon: <Music2 size={18} strokeWidth={1.5} />,     color: "#B48EAD", bg: "linear-gradient(145deg,#18101E,#22162A)", desc: "Audio & video player with visualizer",          tags: ["music","audio","video","media","player"]},
   clipboard:     { icon: <Clipboard size={18} strokeWidth={1.5} />,  color: "#9A9A8A", bg: "linear-gradient(145deg,#141414,#1E1E1E)", desc: "Clipboard history manager with search & pin",   tags: ["clipboard","copy","paste","history"] },
   compliance:       { icon: <Shield size={18} strokeWidth={1.5} />,    color: "#C8A97E", bg: "linear-gradient(145deg,#1E180A,#2A2010)", desc: "GDPR Art. 51/52 independent supervisory monitor",  tags: ["gdpr","compliance","audit","privacy","security"] },
-  "axira-showcase": { icon: <Star size={18} strokeWidth={1.5} />,      color: "#D4B896", bg: "linear-gradient(145deg,#1A1408,#261E0C)", desc: "AxiraNews — live stats, tech stack & feature showcase", tags: ["axira","news","portfolio","showcase","ai"] },
+  "axira-showcase": { icon: <Star    size={18} strokeWidth={1.5} />, color: "#D4B896", bg: "linear-gradient(145deg,#1A1408,#261E0C)", desc: "AxiraNews — live stats, tech stack & feature showcase",                          tags: ["axira","news","portfolio","showcase","ai"] },
+  "axira-hq":       { icon: <Command size={18} strokeWidth={1.5} />, color: "#D4B896", bg: "linear-gradient(145deg,#0E0C18,#1A1428)", desc: "AxiraNews HQ — command centre: health, ingestion, security & OSINT ops", tags: ["axira","hq","admin","command","security","osint","ingestion"] },
 };
 
 // ── Search ────────────────────────────────────────────────────────────────────

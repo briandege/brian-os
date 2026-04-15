@@ -8,7 +8,7 @@ import {
 import {
   Terminal, User, Newspaper, FolderOpen,
   Activity, Database, Mail, FileText, BookOpen, Zap, Globe, Settings, Atom,
-  Bot, PenSquare, Calculator, FileEdit, CalendarDays, Music2, Clipboard, Shield, Star,
+  Bot, PenSquare, Calculator, FileEdit, CalendarDays, Music2, Clipboard, Shield, Star, Command,
 } from "lucide-react";
 import { useWindowStore } from "@/lib/windowStore";
 import { useSettingsStore } from "@/lib/settingsStore";
@@ -39,7 +39,8 @@ const APP_META: Record<AppId, { color: string; bg: string; icon: React.ReactNode
   mediaplayer:   { color: "#C49EC8", bg: "linear-gradient(145deg, #261830, #32203E)",  icon: <Music2 size={20} strokeWidth={1.5} /> },
   clipboard:     { color: "#AAAAAA", bg: "linear-gradient(145deg, #222228, #2C2C34)",  icon: <Clipboard size={20} strokeWidth={1.5} /> },
   compliance:       { color: "#C8A97E", bg: "linear-gradient(145deg, #2A2010, #362A14)",  icon: <Shield size={20} strokeWidth={1.5} /> },
-  "axira-showcase": { color: "#D4B896", bg: "linear-gradient(145deg, #261E0C, #362A14)", icon: <Star size={20} strokeWidth={1.5} /> },
+  "axira-showcase": { color: "#D4B896", bg: "linear-gradient(145deg, #261E0C, #362A14)", icon: <Star    size={20} strokeWidth={1.5} /> },
+  "axira-hq":       { color: "#D4B896", bg: "linear-gradient(145deg, #0E0C18, #1A1428)", icon: <Command size={20} strokeWidth={1.5} /> },
 };
 
 function DockIcon({ app, mouseX }: { app: (typeof APP_REGISTRY)[number]; mouseX: MotionValue<number> }) {

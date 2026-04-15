@@ -169,6 +169,13 @@ export const APP_REGISTRY: AppDefinition[] = [
     defaultSize: { width: 820, height: 600 },
     minSize: { width: 640, height: 480 },
   },
+  {
+    id: "axira-hq",
+    label: "AxiraNews HQ",
+    icon: "Command",
+    defaultSize: { width: 900, height: 640 },
+    minSize: { width: 720, height: 520 },
+  },
 ];
 
 export function getApp(id: string): AppDefinition | undefined {

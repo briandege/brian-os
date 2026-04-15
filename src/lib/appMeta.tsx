@@ -2,7 +2,7 @@ import {
   Terminal, User, Newspaper, FolderOpen,
   Activity, Database, Mail, FileText, BookOpen, Zap,
   Globe, Settings, Atom, Shield, Bot, PenSquare,
-  Calculator, FileEdit, CalendarDays, Music2, Clipboard, Star,
+  Calculator, FileEdit, CalendarDays, Music2, Clipboard, Star, Command,
 } from "lucide-react";
 import type { AppId } from "@/types";
 
@@ -40,6 +40,7 @@ export const APP_META: Record<AppId, AppMeta> = {
   clipboard:     { icon: <Clipboard size={16} strokeWidth={1.5}/>,  iconLg: <Clipboard size={22} strokeWidth={1.5}/>,  color:"#9A9A8A", bg:"linear-gradient(145deg,#141414,#1E1E1E)", desc:"Clipboard history manager with search & pin",   tags:["clipboard","copy","paste"] },
   compliance:       { icon: <Shield size={16} strokeWidth={1.5}/>,    iconLg: <Shield size={22} strokeWidth={1.5}/>,    color:"#C8A97E", bg:"linear-gradient(145deg,#1E180A,#2A2010)", desc:"GDPR Art. 51/52 independent supervisory monitor", tags:["gdpr","compliance","audit","privacy","security"] },
   "axira-showcase": { icon: <Star size={16} strokeWidth={1.5}/>,     iconLg: <Star size={22} strokeWidth={1.5}/>,     color:"#D4B896", bg:"linear-gradient(145deg,#1A1408,#261E0C)", desc:"AxiraNews — live stats, tech stack & feature showcase", tags:["axira","news","portfolio","showcase","ai"] },
+  "axira-hq":       { icon: <Command size={16} strokeWidth={1.5}/>,  iconLg: <Command size={22} strokeWidth={1.5}/>,  color:"#D4B896", bg:"linear-gradient(145deg,#0E0C18,#1A1428)", desc:"AxiraNews HQ — command centre: health, ingestion, security, OSINT", tags:["axira","hq","admin","command","security","osint","ingestion"] },
 };
 
 export function hexRgb(hex: string) {

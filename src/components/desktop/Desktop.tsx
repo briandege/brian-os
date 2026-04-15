@@ -29,6 +29,7 @@ import MediaPlayerApp from "@/components/apps/MediaPlayerApp";
 import ClipboardApp from "@/components/apps/ClipboardApp";
 import ComplianceApp from "@/components/apps/ComplianceApp";
 import AxiraShowcaseApp from "@/components/apps/AxiraShowcaseApp";
+import AxiraHQApp from "@/components/apps/AxiraHQApp";
 import NewsWidget from "@/components/desktop/NewsWidget";
 import PanicOverlay from "@/components/overlays/PanicOverlay";
 import Spotlight from "@/components/spotlight/Spotlight";
@@ -69,6 +70,7 @@ function AppContent({ appId }: { appId: AppId }) {
     case "clipboard":     return <ClipboardApp />;
     case "compliance":    return <ComplianceApp />;
     case "axira-showcase": return <AxiraShowcaseApp />;
+    case "axira-hq":       return <AxiraHQApp />;
   }
 }
 
@@ -195,6 +197,7 @@ export default function Desktop() {
     { label: "Open Terminal",      action: () => open("terminal") },
     { label: "Open AxiraNews",     action: () => open("axira") },
     { label: "AxiraNews Showcase", action: () => open("axira-showcase") },
+    { label: "AxiraNews HQ",      action: () => open("axira-hq") },
     { label: "About Brian",        action: () => open("about") },
     { label: "View Projects",      action: () => open("projects") },
     { label: "Open Notebook",      action: () => open("notebook") },

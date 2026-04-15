@@ -216,7 +216,7 @@ export async function fetchStats(): Promise<BackendStats | null> {
   return { totalArticles: articles.length, byCategory, sources: sources.size };
 }
 
-// ── Admin ────────────────────────────────────────────────────────────────────
+// ── Admin — Ingestion ────────────────────────────────────────────────────────
 export async function triggerIngest(token?: string): Promise<boolean> {
   const res = await apiFetch<unknown>(
     "/v1/ingest",
@@ -227,6 +227,115 @@ export async function triggerIngest(token?: string): Promise<boolean> {
     15000,
   );
   return res !== null;
+}
+
+export type IngestStatus = {
+  sseConnections: number;
+  lastCycle: Record<string, unknown> | string;
+};
+
+export async function fetchIngestStatus(token: string): Promise<IngestStatus | null> {
+  return apiFetch<IngestStatus>("/v1/ingest/status", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function runIngestionCycle(token: string): Promise<boolean> {
+  const res = await apiFetch<unknown>("/v1/ingest/run", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  }, 10000);
+  return res !== null;
+}
+
+// ── Admin — Security ─────────────────────────────────────────────────────────
+export type SecurityStatus = Record<string, unknown>;
+export type SecurityStats  = Record<string, unknown>;
+export type Detection      = { id: string; type?: string; path?: string; severity?: string; detected_at?: string; acknowledged?: boolean; [k: string]: unknown };
+
+export async function fetchSecurityStatus(token: string): Promise<SecurityStatus | null> {
+  return apiFetch<SecurityStatus>("/v1/security/status", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function fetchSecurityStats(token: string): Promise<SecurityStats | null> {
+  return apiFetch<SecurityStats>("/v1/security/stats", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+export async function fetchDetections(token: string, limit = 50): Promise<Detection[]> {
+  const res = await apiFetch<Detection[] | { detections?: Detection[]; data?: Detection[] }>(
+    `/v1/security/detections?limit=${limit}`,
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  return res.detections ?? res.data ?? [];
+}
+
+export async function acknowledgeDetection(id: string, token: string): Promise<boolean> {
+  const res = await apiFetch<unknown>(`/v1/security/detections/${id}/acknowledge`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res !== null;
+}
+
+export async function pauseShield(token: string): Promise<boolean> {
+  const res = await apiFetch<unknown>("/v1/security/shield/pause", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res !== null;
+}
+
+export async function resumeShield(token: string): Promise<boolean> {
+  const res = await apiFetch<unknown>("/v1/security/shield/resume", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res !== null;
+}
+
+export async function startScan(token: string, paths?: string[]): Promise<boolean> {
+  const res = await apiFetch<unknown>("/v1/security/scan/start", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ paths }),
+  });
+  return res !== null;
+}
+
+export async function fetchScanStatus(token: string): Promise<Record<string, unknown> | null> {
+  return apiFetch<Record<string, unknown>>("/v1/security/scan/status", {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+}
+
+// ── Admin — OSINT ────────────────────────────────────────────────────────────
+export type CisaKevEntry = { cveID?: string; vendorProject?: string; product?: string; vulnerabilityName?: string; dateAdded?: string; shortDescription?: string; [k: string]: unknown };
+
+export async function fetchCisaKev(token: string): Promise<CisaKevEntry[]> {
+  const res = await apiFetch<CisaKevEntry[] | { vulnerabilities?: CisaKevEntry[] }>(
+    "/v1/osint/cisa-kev",
+    { headers: { Authorization: `Bearer ${token}` } },
+    10000,
+  );
+  if (!res) return [];
+  if (Array.isArray(res)) return res;
+  return res.vulnerabilities ?? [];
+}
+
+export async function osintLookup(type: "ip" | "domain" | "email" | "cve", query: string, token: string): Promise<Record<string, unknown> | null> {
+  const path = type === "ip"     ? `/v1/osint/ip/${encodeURIComponent(query)}`
+             : type === "domain" ? `/v1/osint/domain/${encodeURIComponent(query)}`
+             : type === "email"  ? `/v1/osint/email?q=${encodeURIComponent(query)}`
+                                 : `/v1/osint/cve?q=${encodeURIComponent(query)}`;
+  return apiFetch<Record<string, unknown>>(path, {
+    headers: { Authorization: `Bearer ${token}` },
+  }, 12000);
 }
 
 // ── Security alert ───────────────────────────────────────────────────────────
